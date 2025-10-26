@@ -4,9 +4,29 @@
 
 import { z } from "zod";
 
+// Schema for inline data (base64 encoded files)
+const InlineDataSchema = z.object({
+  mimeType: z.string().describe("MIME type of the file (e.g., 'image/jpeg', 'audio/mp3', 'video/mp4')"),
+  data: z.string().describe("Base64 encoded file data"),
+});
+
+// Schema for file data (URIs - Cloud Storage, HTTPS, or file://)
+const FileDataSchema = z.object({
+  mimeType: z.string().describe("MIME type of the file"),
+  fileUri: z.string().describe("URI of the file (file:// for local files, https:// for public URLs, or cloud storage URIs)"),
+});
+
+// Schema for a single multimodal part
+const MultimodalPartSchema = z.object({
+  text: z.string().optional().describe("Text content"),
+  inlineData: InlineDataSchema.optional().describe("Inline base64 encoded file data"),
+  fileData: FileDataSchema.optional().describe("File URI for local files, public URLs, or cloud storage"),
+});
+
 export const QuerySchema = z.object({
   prompt: z.string().describe("The text prompt to send to Claude"),
   sessionId: z.string().optional().describe("Optional conversation session ID for multi-turn conversations"),
+  parts: z.array(MultimodalPartSchema).optional().describe("Optional multimodal content parts (images, audio, video, documents)"),
 });
 
 export const ExecuteCommandSchema = z.object({
