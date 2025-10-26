@@ -1,6 +1,6 @@
 # claude-agent-mcp-server
 
-An intelligent MCP (Model Context Protocol) server that enables AI assistants to interact with **Claude** (Anthropic) with **agentic capabilities** - intelligent query handling, multi-turn conversations, session management, and extensible tool integration.
+An intelligent MCP (Model Context Protocol) server that enables AI assistants to interact with **Claude** (Anthropic) with **agentic capabilities** - intelligent query handling, multi-turn conversations, session management, MCP-to-MCP connectivity, and **multimodal input support**.
 
 ## Purpose
 
@@ -8,11 +8,29 @@ This server provides:
 - **Agentic Query Handling**: Access Claude's powerful reasoning and code understanding capabilities
 - **Query Claude**: Send queries to Claude models for cross-validation, second opinions, or specialized tasks
 - **Multi-turn Conversations**: Maintain context across queries with session management
-- **Tool Integration**: Extensible architecture for adding custom tools via MCP-to-MCP connectivity
+- **MCP-to-MCP Connectivity**: Integrate with external MCP servers for extended tool capabilities
+- **Multimodal Support**: Send images, audio, video, and documents alongside text prompts
 - **Session Management**: Automatic session creation and cleanup with configurable timeouts
 - **Logging & Observability**: File-based logging of execution traces and responses
 
 ## Key Features
+
+### 🔗 MCP-to-MCP Connectivity
+Extend Claude's capabilities with external MCP servers:
+- **Dynamic Tool Discovery**: Automatically discover and use tools from connected MCP servers
+- **Stdio & HTTP Support**: Connect to MCP servers via stdio (subprocess) or HTTP
+- **Seamless Integration**: Tools from external servers appear natively to Claude
+- **Agentic Orchestration**: Claude automatically selects and uses the right tools
+- Configure via `CLAUDE_MCP_SERVERS` environment variable (JSON array)
+
+### 🎨 Multimodal Input Support
+Send rich media content to Claude:
+- **Images**: JPEG, PNG, WebP, HEIC
+- **Videos**: MP4, MOV, AVI, WebM, and more
+- **Audio**: MP3, WAV, AAC, FLAC, and more
+- **Documents/Code**: PDF, text files, code files
+- Support for base64-encoded inline data and file URIs
+- Pass via optional `parts` parameter in query tool
 
 ### 🎭 System Prompt Customization
 Customize the AI assistant's behavior and persona:
@@ -117,6 +135,43 @@ export CLAUDE_LOG_DIR="/path/to/logs"      # Custom log directory (default: ./lo
 export CLAUDE_LOG_TO_STDERR="true"         # Set to 'true' to pipe logs to stderr for debugging
 ```
 
+**Optional MCP Server Configuration:**
+```bash
+# Connect to external MCP servers for extended capabilities
+# JSON array of server configurations
+export CLAUDE_MCP_SERVERS='[
+  {
+    "name": "filesystem",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/dir"]
+  },
+  {
+    "name": "github",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-github"],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "your-github-token"
+    }
+  }
+]'
+```
+
+Each server configuration supports:
+- **Stdio transport**: Spawns MCP server as subprocess
+  - `name`: Unique server identifier
+  - `transport`: "stdio"
+  - `command`: Command to execute (e.g., "npx", "node")
+  - `args`: Array of command arguments
+  - `env`: Optional environment variables
+  
+- **HTTP transport**: Connects to MCP server via HTTP
+  - `name`: Unique server identifier
+  - `transport`: "http"
+  - `url`: Base URL of the MCP server
+  - `headers`: Optional HTTP headers
+
 ### MCP Client Integration
 
 Add to your MCP client configuration:
@@ -202,20 +257,27 @@ You can run multiple Claude servers with different personas for specialized task
 
 ### query
 
-Main entrypoint for querying Claude AI with support for multi-turn conversations and agentic tool usage.
+Main entrypoint for querying Claude AI with support for multi-turn conversations, agentic tool usage, and **multimodal inputs**.
 
 **Parameters:**
 - `prompt` (string, required): The text prompt to send to Claude
 - `sessionId` (string, optional): Conversation session ID for multi-turn conversations
+- `parts` (array, optional): Multimodal content parts (images, audio, video, documents)
+  - Each part can contain:
+    - `text`: Additional text content
+    - `inlineData`: Base64-encoded file data with `mimeType` and `data` fields
+    - `fileData`: File URI with `mimeType` and `fileUri` fields (file://, https://)
 
 **How It Works:**
-1. Receives the prompt and optional session ID
+1. Receives the prompt, optional session ID, and optional multimodal parts
 2. Retrieves conversation history if session ID provided
 3. Creates new session if conversations enabled but no session ID given
-4. Sends query to Claude with conversation context
-5. Claude Agent SDK automatically handles tool usage through agentic loops (up to `CLAUDE_MAX_TURNS`)
-6. Saves conversation history for future turns
-7. Returns response with session ID and token usage statistics
+4. Processes multimodal content if provided (images, audio, video, documents)
+5. Sends query to Claude with conversation context and multimodal content
+6. Claude Agent SDK automatically handles tool usage through agentic loops (up to `CLAUDE_MAX_TURNS`)
+7. If MCP servers are configured, Claude can automatically discover and use their tools
+8. Saves conversation history for future turns
+9. Returns response with session ID and token usage statistics
 
 **Examples:**
 ```
@@ -230,6 +292,28 @@ query: "What is machine learning?"
 query: "Give me an example"
 sessionId: "abc123..."
 → Uses previous context to provide relevant example
+
+# Multimodal query with image (base64)
+query: "What's in this image?"
+parts: [
+  {
+    "inlineData": {
+      "mimeType": "image/jpeg",
+      "data": "base64-encoded-image-data..."
+    }
+  }
+]
+
+# Multimodal query with file URI
+query: "Analyze this audio file"
+parts: [
+  {
+    "fileData": {
+      "mimeType": "audio/mp3",
+      "fileUri": "file:///path/to/audio.mp3"
+    }
+  }
+]
 
 # Complex query with agentic tool usage
 query: "Review this code for security issues: [code snippet]"
@@ -613,8 +697,8 @@ This project is inspired by and follows the architecture of [gemini-mcp-server](
 | File-based Logging | ✅ | ✅ |
 | Agentic Loop | ✅ | ✅ |
 | Tool Execution | ✅ (WebFetch, bash, files) | ✅ (WebFetch, bash, files) |
-| MCP-to-MCP Connectivity | ✅ | 🚧 Planned |
-| Multimodal Support | ✅ (images, audio, video) | 🚧 Planned |
+| MCP-to-MCP Connectivity | ✅ | ✅ |
+| Multimodal Support | ✅ (images, audio, video) | ✅ (images, audio, video, documents) |
 
 ## Roadmap
 
@@ -628,12 +712,12 @@ This project is inspired by and follows the architecture of [gemini-mcp-server](
   - [x] `web_fetch`: Fetch and extract content from HTTPS URLs
 - [x] **Security**: Multi-layer defense with SSRF protection, prompt injection guardrails, file security
 - [x] **Multi-provider Support**: Anthropic, Vertex AI, AWS Bedrock
+- [x] **MCP-to-MCP Connectivity**: Integration with external MCP servers via Claude Agent SDK
+- [x] **Multimodal Support**: Images, audio, video, and documents via optional `parts` parameter
 
 ### Planned Features
 
-- [ ] **MCP-to-MCP**: Integration with external MCP servers for extended capabilities
 - [ ] **Streaming**: Real-time response streaming for better user experience
-- [ ] **Multimodal**: Support for images, audio, and documents
 - [ ] **Caching**: Response caching for identical queries to reduce costs
 - [ ] **Advanced Reasoning**: Enhanced multi-step reasoning capabilities
 

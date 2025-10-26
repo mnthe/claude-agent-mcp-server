@@ -122,7 +122,9 @@ export class ClaudeAgentMCPServer {
       const tools: any[] = [
         {
           name: "query",
-          description: "Send a query to Claude AI assistant. Supports multi-turn conversations with session management.",
+          description: "Send a query to Claude AI assistant. Supports multi-turn conversations with session management. " +
+            "Supports multimodal inputs (images, audio, video, documents) via the optional 'parts' parameter. " +
+            "Can automatically use tools from connected MCP servers when CLAUDE_MCP_SERVERS is configured.",
           inputSchema: {
             type: "object",
             properties: {
@@ -133,6 +135,49 @@ export class ClaudeAgentMCPServer {
               sessionId: {
                 type: "string",
                 description: "Optional conversation session ID for multi-turn conversations"
+              },
+              parts: {
+                type: "array",
+                description: "Optional multimodal content parts (images, audio, video, documents)",
+                items: {
+                  type: "object",
+                  properties: {
+                    text: {
+                      type: "string",
+                      description: "Text content"
+                    },
+                    inlineData: {
+                      type: "object",
+                      description: "Inline base64 encoded file data",
+                      properties: {
+                        mimeType: {
+                          type: "string",
+                          description: "MIME type of the file (e.g., 'image/jpeg', 'audio/mp3', 'video/mp4')"
+                        },
+                        data: {
+                          type: "string",
+                          description: "Base64 encoded file data"
+                        }
+                      },
+                      required: ["mimeType", "data"]
+                    },
+                    fileData: {
+                      type: "object",
+                      description: "File URI for local files, public URLs, or cloud storage",
+                      properties: {
+                        mimeType: {
+                          type: "string",
+                          description: "MIME type of the file"
+                        },
+                        fileUri: {
+                          type: "string",
+                          description: "URI of the file (file:// for local files, https:// for public URLs)"
+                        }
+                      },
+                      required: ["mimeType", "fileUri"]
+                    }
+                  }
+                }
               }
             },
             required: ["prompt"]
