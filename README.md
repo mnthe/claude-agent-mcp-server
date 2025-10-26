@@ -1,6 +1,6 @@
 # claude-agent-mcp-server
 
-An intelligent MCP (Model Context Protocol) server that enables AI assistants to interact with **Claude** (Anthropic) with **agentic capabilities** - intelligent query handling, multi-turn conversations, session management, MCP-to-MCP connectivity, and **multimodal input support**.
+An intelligent MCP (Model Context Protocol) server that enables AI assistants to interact with **Claude** (Anthropic) with **agentic capabilities** - intelligent query handling, multi-turn conversations, session management, MCP-to-MCP connectivity, and **multimodal input support** (images, text, PDFs).
 
 ## Purpose
 
@@ -9,7 +9,7 @@ This server provides:
 - **Query Claude**: Send queries to Claude models for cross-validation, second opinions, or specialized tasks
 - **Multi-turn Conversations**: Maintain context across queries with session management
 - **MCP-to-MCP Connectivity**: Integrate with external MCP servers for extended tool capabilities
-- **Multimodal Support**: Send images, audio, video, and documents alongside text prompts
+- **Multimodal Support**: Send images, text, and PDF documents alongside text prompts
 - **Session Management**: Automatic session creation and cleanup with configurable timeouts
 - **Logging & Observability**: File-based logging of execution traces and responses
 
@@ -25,10 +25,9 @@ Extend Claude's capabilities with external MCP servers:
 
 ### 🎨 Multimodal Input Support
 Send rich media content to Claude:
-- **Images**: JPEG, PNG, WebP, HEIC
-- **Videos**: MP4, MOV, AVI, WebM, and more
-- **Audio**: MP3, WAV, AAC, FLAC, and more
-- **Documents/Code**: PDF, text files, code files
+- **Images**: JPEG, PNG, WebP, GIF
+- **Documents**: PDF files
+- **Text**: Plain text content
 - Support for base64-encoded inline data and file URIs
 - Pass via optional `parts` parameter in query tool
 
@@ -101,7 +100,7 @@ export ANTHROPIC_API_KEY="your-api-key-here"
 
 **Optional Model Settings:**
 ```bash
-export CLAUDE_MODEL="claude-3-5-sonnet-20241022"
+export CLAUDE_MODEL="claude-sonnet-4-5-20250514"  # or claude-haiku-4-5-20250514, claude-opus-4-1-20250514
 export CLAUDE_TEMPERATURE="1.0"
 export CLAUDE_MAX_TOKENS="8192"
 ```
@@ -185,7 +184,7 @@ Add to your MCP client configuration:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "ANTHROPIC_API_KEY": "your-api-key-here",
-        "CLAUDE_MODEL": "claude-3-5-sonnet-20241022",
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
     }
@@ -202,7 +201,7 @@ Add to your MCP client configuration:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "ANTHROPIC_API_KEY": "your-api-key-here",
-        "CLAUDE_MODEL": "claude-3-5-sonnet-20241022"
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514"
       }
     }
   }
@@ -262,17 +261,17 @@ Main entrypoint for querying Claude AI with support for multi-turn conversations
 **Parameters:**
 - `prompt` (string, required): The text prompt to send to Claude
 - `sessionId` (string, optional): Conversation session ID for multi-turn conversations
-- `parts` (array, optional): Multimodal content parts (images, audio, video, documents)
+- `parts` (array, optional): Multimodal content parts (images, text, PDF documents)
   - Each part can contain:
     - `text`: Additional text content
-    - `inlineData`: Base64-encoded file data with `mimeType` and `data` fields
-    - `fileData`: File URI with `mimeType` and `fileUri` fields (file://, https://)
+    - `inlineData`: Base64-encoded file data with `mimeType` and `data` fields (supports image/* and application/pdf)
+    - `fileData`: File URI with `mimeType` and `fileUri` fields (file://, https://) for images and PDFs
 
 **How It Works:**
 1. Receives the prompt, optional session ID, and optional multimodal parts
 2. Retrieves conversation history if session ID provided
 3. Creates new session if conversations enabled but no session ID given
-4. Processes multimodal content if provided (images, audio, video, documents)
+4. Processes multimodal content if provided (images, text, PDF documents)
 5. Sends query to Claude with conversation context and multimodal content
 6. Claude Agent SDK automatically handles tool usage through agentic loops (up to `CLAUDE_MAX_TURNS`)
 7. If MCP servers are configured, Claude can automatically discover and use their tools
@@ -304,13 +303,13 @@ parts: [
   }
 ]
 
-# Multimodal query with file URI
-query: "Analyze this audio file"
+# Multimodal query with PDF document (file URI)
+query: "Summarize this PDF document"
 parts: [
   {
     "fileData": {
-      "mimeType": "audio/mp3",
-      "fileUri": "file:///path/to/audio.mp3"
+      "mimeType": "application/pdf",
+      "fileUri": "file:///path/to/document.pdf"
     }
   }
 ]
@@ -698,7 +697,7 @@ This project is inspired by and follows the architecture of [gemini-mcp-server](
 | Agentic Loop | ✅ | ✅ |
 | Tool Execution | ✅ (WebFetch, bash, files) | ✅ (WebFetch, bash, files) |
 | MCP-to-MCP Connectivity | ✅ | ✅ |
-| Multimodal Support | ✅ (images, audio, video) | ✅ (images, audio, video, documents) |
+| Multimodal Support | ✅ (images, audio, video) | ✅ (images, text, PDFs) |
 
 ## Roadmap
 
@@ -713,7 +712,7 @@ This project is inspired by and follows the architecture of [gemini-mcp-server](
 - [x] **Security**: Multi-layer defense with SSRF protection, prompt injection guardrails, file security
 - [x] **Multi-provider Support**: Anthropic, Vertex AI, AWS Bedrock
 - [x] **MCP-to-MCP Connectivity**: Integration with external MCP servers via Claude Agent SDK
-- [x] **Multimodal Support**: Images, audio, video, and documents via optional `parts` parameter
+- [x] **Multimodal Support**: Images, text, and PDF documents via optional `parts` parameter
 
 ### Planned Features
 
