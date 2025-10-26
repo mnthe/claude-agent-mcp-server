@@ -6,7 +6,6 @@ export type ProviderType = 'anthropic' | 'vertex' | 'bedrock';
 
 export interface ClaudeAgentConfig {
   provider: ProviderType;
-  apiKey: string;
   model: string;
   temperature: number;
   maxTokens: number;

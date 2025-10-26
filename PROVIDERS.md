@@ -25,7 +25,7 @@ The claude-agent-mcp-server uses the Claude Agent SDK, which supports multiple b
 - All providers use the same Claude models
 - Configuration is done via environment variables
 - The Claude Agent SDK handles provider routing automatically
-- You always need an `ANTHROPIC_API_KEY` regardless of provider (used by the SDK)
+- Each provider uses its own authentication method (API key for Anthropic, AWS credentials for Bedrock, GCP credentials for Vertex AI)
 
 ## Anthropic API (Default)
 
@@ -88,7 +88,6 @@ AWS Bedrock provides Claude models through AWS infrastructure, ideal for enterpr
 1. **AWS Account** with Bedrock access
 2. **AWS Credentials** configured (IAM user or role)
 3. **Model Access**: Enable Claude models in Bedrock console
-4. **Anthropic API Key**: Still required by the Claude Agent SDK
 
 ### Step 1: Enable Claude Models in Bedrock
 
@@ -158,7 +157,6 @@ If running on AWS infrastructure, use an IAM role with Bedrock permissions:
 ```bash
 # Required
 export CLAUDE_PROVIDER="bedrock"
-export ANTHROPIC_API_KEY="sk-ant-api03-..."  # Still required by SDK
 export BEDROCK_REGION="us-east-1"
 
 # Optional: model configuration
@@ -184,7 +182,6 @@ export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "bedrock",
-        "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "BEDROCK_REGION": "us-east-1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
@@ -208,7 +205,6 @@ In your project's `.claude.json`:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "bedrock",
-        "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "BEDROCK_REGION": "us-east-1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
@@ -242,7 +238,7 @@ Vertex AI provides Claude models through Google Cloud infrastructure, ideal for 
 1. **Google Cloud Project** with Vertex AI API enabled
 2. **GCP Credentials** configured (service account or user credentials)
 3. **Claude Model Access**: Request access to Claude models in Vertex AI
-4. **Anthropic API Key**: Still required by the Claude Agent SDK
+
 
 ### Step 1: Enable Vertex AI API
 
@@ -323,7 +319,6 @@ gcloud iam service-accounts add-iam-policy-binding \
 ```bash
 # Required
 export CLAUDE_PROVIDER="vertex"
-export ANTHROPIC_API_KEY="sk-ant-api03-..."  # Still required by SDK
 export VERTEX_PROJECT_ID="your-gcp-project-id"
 
 # Optional
@@ -349,7 +344,6 @@ export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "vertex",
-        "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "VERTEX_PROJECT_ID": "your-gcp-project-id",
         "VERTEX_LOCATION": "us-central1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
@@ -374,7 +368,6 @@ In your project's `.claude.json`:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "vertex",
-        "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "VERTEX_PROJECT_ID": "your-gcp-project-id",
         "VERTEX_LOCATION": "us-central1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
@@ -415,7 +408,6 @@ You can run multiple instances of claude-agent-mcp-server with different provide
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "bedrock",
-        "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "BEDROCK_REGION": "us-east-1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
@@ -425,7 +417,6 @@ You can run multiple instances of claude-agent-mcp-server with different provide
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "vertex",
-        "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "VERTEX_PROJECT_ID": "your-project",
         "VERTEX_LOCATION": "us-central1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
@@ -443,17 +434,6 @@ This allows you to:
 ## Troubleshooting
 
 ### Common Issues
-
-#### "Invalid API Key" with Bedrock/Vertex
-
-**Problem:** Error about invalid API key even though AWS/GCP credentials are correct.
-
-**Solution:** You still need a valid `ANTHROPIC_API_KEY` for the Claude Agent SDK to work. Get one from https://console.anthropic.com/.
-
-```bash
-# All providers require this
-export ANTHROPIC_API_KEY="sk-ant-api03-..."
-```
 
 #### Bedrock: "Model not found" or "Access denied"
 

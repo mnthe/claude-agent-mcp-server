@@ -87,16 +87,16 @@ npm run build
 
 ### Authentication
 
-Set your Anthropic API key:
+Set your Anthropic API key (for default anthropic provider):
 ```bash
 export ANTHROPIC_API_KEY="your-api-key-here"
 ```
 
-**Using AWS Bedrock or Vertex AI?** See the [Provider Setup Guide](PROVIDERS.md) for detailed instructions on configuring alternative providers.
+**Using AWS Bedrock or Vertex AI?** See the [Provider Setup Guide](PROVIDERS.md) for detailed instructions. These providers use their own authentication methods (AWS credentials or GCP credentials) and do not require ANTHROPIC_API_KEY.
 
 ### Configuration
 
-**Required Environment Variables:**
+**Required for Anthropic Provider (default):**
 ```bash
 export ANTHROPIC_API_KEY="your-api-key-here"
 ```
@@ -624,9 +624,13 @@ export CLAUDE_LOG_DIR="/tmp/claude-logs"
 
 ### Authentication Errors
 
+**For Anthropic provider (default):**
 1. Verify API key: `echo $ANTHROPIC_API_KEY`
 2. Check key validity in [Anthropic Console](https://console.anthropic.com/)
 3. Ensure key has proper permissions
+
+**For Bedrock/Vertex AI:**
+See [Provider Setup Guide](PROVIDERS.md) for provider-specific authentication troubleshooting.
 
 ### Session Issues
 

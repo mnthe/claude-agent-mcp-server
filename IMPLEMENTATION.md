@@ -45,7 +45,7 @@ The claude-agent-mcp-server follows a clean, modular architecture for informatio
 **Purpose**: Load and validate environment variables
 
 **Key Features**:
-- Required: `ANTHROPIC_API_KEY`
+- Provider-based authentication (ANTHROPIC_API_KEY for anthropic, AWS credentials for bedrock, GCP credentials for vertex)
 - Optional: Model settings, conversation settings, logging settings
 - JSON parsing for complex configurations
 - Validation with process exit on errors
@@ -53,9 +53,12 @@ The claude-agent-mcp-server follows a clean, modular architecture for informatio
 **Example**:
 ```typescript
 export function loadConfig(): ClaudeAgentConfig {
+  const provider = process.env.CLAUDE_PROVIDER || 'anthropic';
   const apiKey = process.env.ANTHROPIC_API_KEY || "";
-  if (!apiKey) {
-    console.error("Error: ANTHROPIC_API_KEY required");
+
+  // Only require API key for anthropic provider
+  if (provider === 'anthropic' && !apiKey) {
+    console.error("Error: ANTHROPIC_API_KEY required for anthropic provider");
     process.exit(1);
   }
   // ... load other settings
@@ -475,7 +478,7 @@ Each tool uses the handler pattern for clean separation of concerns.
 ### Common Issues
 
 1. **Server won't start**:
-   - Check ANTHROPIC_API_KEY
+   - Check authentication (ANTHROPIC_API_KEY for anthropic, AWS/GCP credentials for bedrock/vertex)
    - Verify Node.js version (18+)
    - Check build output
 
