@@ -23,9 +23,6 @@ export interface ClaudeAgentConfig {
   vertexProjectId?: string;
   vertexLocation?: string;
   bedrockRegion?: string;
-  // Tool enablement
-  enableCommandExecution: boolean;
-  enableFileWrite: boolean;
 }
 
 export interface MCPServerConfig {

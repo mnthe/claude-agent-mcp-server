@@ -150,106 +150,27 @@ Security Guidelines:
 #### Information Disclosure Protection
 - System prompts and internal configuration are never included in responses
 - Error messages are sanitized to avoid leaking implementation details
-- File paths are normalized and validated before use
+- Session IDs are cryptographically random
 
-### 3. File Security
+### 3. Content Boundaries
 
-File operations require careful validation to prevent unauthorized access.
-
-#### Path Traversal Prevention
-```typescript
-// Normalize and validate paths
-const normalizedPath = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, '');
-const resolvedPath = path.resolve(normalizedPath);
-
-// Ensure path is within allowed directories
-const allowedDirs = [
-  process.cwd(),
-  path.join(os.homedir(), 'Documents'),
-  path.join(os.homedir(), 'Downloads'),
-  path.join(os.homedir(), 'Desktop'),
-];
-
-if (!allowedDirs.some(dir => resolvedPath.startsWith(path.resolve(dir)))) {
-  throw new SecurityError('Access denied: Path outside allowed directories');
-}
-```
-
-**Why:** Prevents `../../etc/passwd` style attacks.
-
-#### Executable File Blocking
-```typescript
-const EXECUTABLE_EXTENSIONS = [
-  '.exe', '.dll', '.so', '.dylib',
-  '.sh', '.bat', '.cmd', '.ps1',
-  '.app', '.deb', '.rpm',
-];
-
-if (EXECUTABLE_EXTENSIONS.some(ext => filePath.toLowerCase().endsWith(ext))) {
-  throw new SecurityError('Executable files are not allowed');
-}
-```
-
-**Why:** Prevents execution of malicious code.
-
-#### Directory Whitelist
-Only specific directories are accessible:
-- Current working directory (`process.cwd()`)
-- User's Documents folder
-- User's Downloads folder
-- User's Desktop folder
-
-**Why:** Limits attack surface to user-controlled directories.
-
-#### File Size Limits
-- **File operations**: 10MB maximum
-- **Command output**: 100KB maximum
-- **Web content**: 50KB maximum
-
-**Why:** Prevents resource exhaustion and DoS attacks.
-
-### 4. Content Boundaries
-
-#### Size Limits
-All external content is limited to prevent resource exhaustion:
+#### Token Limits
+Content processing is limited to prevent resource exhaustion:
 
 ```typescript
-const MAX_SIZES = {
-  FILE_READ: 10 * 1024 * 1024,   // 10MB
-  FILE_WRITE: 10 * 1024 * 1024,  // 10MB
-  WEB_CONTENT: 50 * 1024,         // 50KB
-  COMMAND_OUTPUT: 100 * 1024,     // 100KB
+const LIMITS = {
+  MAX_TOKENS: 16384,              // Max output tokens per query
+  MAX_HISTORY: 10,                // Max conversation history messages
+  SESSION_TIMEOUT: 3600,          // Session expires after 1 hour
 };
 ```
 
-#### Timeout Controls
-```typescript
-const TIMEOUTS = {
-  COMMAND_EXECUTION: 30 * 1000,  // 30 seconds
-  WEB_FETCH: 10 * 1000,          // 10 seconds
-};
-```
+#### Query Validation
+- Prompts are validated for length and content
+- Multimodal parts are validated for supported MIME types
+- Session IDs are validated for existence and timeout status
 
 ## Configuration
-
-### Tool Enablement
-
-Sensitive operations require explicit enablement:
-
-```bash
-# Disabled by default - must opt-in
-export CLAUDE_ENABLE_COMMAND_EXECUTION="false"
-export CLAUDE_ENABLE_FILE_WRITE="false"
-```
-
-**Security Rationale:**
-- `execute_command`: Can run arbitrary shell commands
-- `write_file`: Can modify filesystem
-
-**Safe by default:**
-- `read_file`: Read-only, whitelist-validated paths
-- `web_fetch`: HTTPS-only, SSRF-protected
-- `query`: Core AI interaction, no filesystem/command access
 
 ### Provider Security
 
@@ -292,10 +213,12 @@ chmod 700 /var/log/claude-agent-mcp
 
 ### For Production Deployments
 
-1. **Disable Sensitive Tools**
+1. **Use Secure API Key Management**
    ```bash
-   export CLAUDE_ENABLE_COMMAND_EXECUTION="false"
-   export CLAUDE_ENABLE_FILE_WRITE="false"
+   # Use environment variables or secrets manager
+   export ANTHROPIC_API_KEY="your-secure-key"
+   # OR with AWS Secrets Manager
+   # OR with HashiCorp Vault
    ```
 
 2. **Enable Logging with Secure Storage**
@@ -313,7 +236,7 @@ chmod 700 /var/log/claude-agent-mcp
 
 4. **Monitor for Anomalies**
    - Watch for unusual API usage patterns
-   - Monitor failed security checks in logs
+   - Monitor failed requests in logs
    - Track token usage and costs
 
 5. **Regular Updates**
@@ -332,8 +255,6 @@ chmod 700 /var/log/claude-agent-mcp
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "ANTHROPIC_API_KEY": "your-key",
-        "CLAUDE_ENABLE_COMMAND_EXECUTION": "false",
-        "CLAUDE_ENABLE_FILE_WRITE": "false",
         "CLAUDE_DISABLE_LOGGING": "true"
       }
     }
@@ -341,12 +262,10 @@ chmod 700 /var/log/claude-agent-mcp
 }
 ```
 
-### For CLI Tools (Use with Caution)
+### For CLI Tools
 
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-export CLAUDE_ENABLE_COMMAND_EXECUTION="false"  # Still disabled by default
-export CLAUDE_ENABLE_FILE_WRITE="false"         # Still disabled by default
 export CLAUDE_LOG_TO_STDERR="true"              # See logs in real-time
 ```
 
@@ -355,13 +274,12 @@ export CLAUDE_LOG_TO_STDERR="true"              # See logs in real-time
 ### In Scope
 
 **Threats We Protect Against:**
-1. **SSRF Attacks**: Unauthorized access to internal resources
-2. **Prompt Injection**: Malicious instructions in external content
-3. **Path Traversal**: Unauthorized filesystem access
-4. **Code Execution**: Running malicious code
-5. **Information Disclosure**: Leaking sensitive data
-6. **Resource Exhaustion**: DoS via large files/outputs
-7. **Credential Theft**: Stealing API keys or cloud credentials
+1. **Prompt Injection**: Malicious instructions injected into queries
+2. **Information Disclosure**: Leaking sensitive data (API keys, session info)
+3. **Session Hijacking**: Unauthorized access to conversation sessions
+4. **Resource Exhaustion**: DoS via excessive queries or large inputs
+5. **Credential Theft**: Stealing API keys or cloud credentials
+6. **Model Abuse**: Misuse of Claude models via the API
 
 ### Out of Scope
 
@@ -403,12 +321,12 @@ We will:
 
 Before deploying claude-agent-mcp-server:
 
-- [ ] API keys stored in environment variables, not code
-- [ ] Sensitive tools disabled unless specifically needed
+- [ ] API keys stored in environment variables or secrets manager, not code
 - [ ] Logging configured securely or disabled
 - [ ] Running latest version of dependencies
-- [ ] File system permissions properly configured
-- [ ] Network access restricted if possible
+- [ ] Network access restricted if possible (firewall rules)
+- [ ] Session timeout configured appropriately
+- [ ] API rate limiting configured (if behind a proxy)
 - [ ] Monitoring and alerting configured
 - [ ] Tested in non-production environment first
 

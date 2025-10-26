@@ -4,7 +4,7 @@ This document provides technical details about the claude-agent-mcp-server imple
 
 ## Architecture Overview
 
-The claude-agent-mcp-server follows a clean, modular architecture inspired by gemini-mcp-server:
+The claude-agent-mcp-server follows a clean, modular architecture for information retrieval and conversation management:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -92,13 +92,23 @@ export interface Session {
 
 **Schemas**:
 - `QuerySchema`: Validates query tool inputs
-- Future: `ExecuteCommandSchema`, `ReadFileSchema`, `WriteFileSchema`
+- `SearchSchema`: Validates search tool inputs
+- `FetchSchema`: Validates fetch tool inputs
 
 **Example**:
 ```typescript
 export const QuerySchema = z.object({
   prompt: z.string().describe("The text prompt"),
   sessionId: z.string().optional().describe("Session ID"),
+  parts: z.array(z.object({...})).optional().describe("Multimodal content parts"),
+});
+
+export const SearchSchema = z.object({
+  query: z.string().describe("The search query"),
+});
+
+export const FetchSchema = z.object({
+  id: z.string().describe("Document ID to fetch"),
 });
 ```
 
@@ -401,64 +411,15 @@ echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"query","ar
 
 ## Extension Points
 
-### Adding New Tools
+### Extending Tool Functionality
 
-1. **Define Schema** (`src/schemas/index.ts`):
-```typescript
-export const MyToolSchema = z.object({
-  arg1: z.string().describe("Description"),
-  arg2: z.number().optional(),
-});
-```
+The three core tools can be extended by:
 
-2. **Create Handler** (`src/handlers/MyToolHandler.ts`):
-```typescript
-export class MyToolHandler {
-  async handle(input: MyToolInput): Promise<string> {
-    // Implementation
-  }
-}
-```
+1. **Enhance Query**: Modify `QueryHandler` to support additional parameters or custom processing
+2. **Improve Search**: Enhance `SearchHandler` with better search algorithm or result ranking
+3. **Extend Fetch**: Add support for additional document types in `FetchHandler`
 
-3. **Register in Server** (`src/server/ClaudeAgentMCPServer.ts`):
-```typescript
-// In constructor
-this.myToolHandler = new MyToolHandler();
-
-// In setupHandlers()
-tools.push({
-  name: "my_tool",
-  description: "...",
-  inputSchema: { ... }
-});
-
-// In CallToolRequestSchema handler
-case "my_tool":
-  return await this.myToolHandler.handle(input);
-```
-
-### Adding MCP-to-MCP Support
-
-1. **Define Connection Types** (`src/types/mcp.ts`)
-2. **Create MCP Client** (`src/mcp/EnhancedMCPClient.ts`)
-3. **Implement Connections** (`src/mcp/StdioMCPConnection.ts`, `HttpMCPConnection.ts`)
-4. **Tool Discovery** (at startup, list tools from external servers)
-5. **Tool Routing** (forward calls to appropriate server)
-
-### Adding Streaming Support
-
-1. **Update Service** (`src/services/ClaudeAIService.ts`):
-```typescript
-async *queryStream(prompt: string): AsyncGenerator<string> {
-  const stream = await this.client.messages.create({ stream: true });
-  for await (const chunk of stream) {
-    yield chunk.delta.text;
-  }
-}
-```
-
-2. **Update Handler** to support streaming responses
-3. **Update Server** to handle streaming protocol
+Each tool uses the handler pattern for clean separation of concerns.
 
 ## Security Considerations
 
@@ -479,23 +440,20 @@ async *queryStream(prompt: string): AsyncGenerator<string> {
 
 ### Future Security Enhancements
 
-1. **Command Execution**:
-   - Whitelist allowed commands
-   - Sandbox execution environment
-   - Timeout limits
-   - Output size limits
+1. **Enhanced Query Validation**:
+   - Advanced prompt injection detection
+   - Sensitive data redaction
+   - Content moderation
 
-2. **File Operations**:
-   - Whitelist allowed directories
-   - Path traversal prevention
-   - File size limits
-   - MIME type validation
+2. **Search Result Validation**:
+   - Result relevance scoring
+   - Source trust verification
+   - Content quality filtering
 
-3. **Web Fetching**:
-   - HTTPS-only
-   - Private IP blocking
-   - SSRF protection
-   - Content size limits
+3. **Rate Limiting**:
+   - Per-session rate limits
+   - Request throttling
+   - Abuse prevention
 
 ## Performance Considerations
 
@@ -538,15 +496,16 @@ async *queryStream(prompt: string): AsyncGenerator<string> {
 
 ## Conclusion
 
-The claude-agent-mcp-server provides a clean, extensible foundation for Claude AI integration via MCP. The architecture follows best practices from gemini-mcp-server while adapting to Claude's specific capabilities and the Anthropic SDK.
+The claude-agent-mcp-server provides a clean, focused implementation for Claude AI integration via MCP. It specializes in information retrieval and conversation management with three core tools: query, search, and fetch.
 
 Key strengths:
 - ✅ Clean separation of concerns
 - ✅ Type-safe implementation
 - ✅ Runtime validation
-- ✅ Extensible architecture
+- ✅ Focused tool set
 - ✅ Comprehensive logging
 - ✅ Session management
-- ✅ Well-documented
+- ✅ Multimodal input support
+- ✅ Multi-provider support (Anthropic, Bedrock, Vertex AI)
 
-Future enhancements will build on this foundation to add more advanced features while maintaining code quality and security.
+Future enhancements will build on this foundation to add streaming, caching, and advanced reasoning while maintaining code quality and security.

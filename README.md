@@ -128,14 +128,6 @@ export VERTEX_LOCATION="us-central1"
 export CLAUDE_ENABLE_CONVERSATIONS="true"
 export CLAUDE_SESSION_TIMEOUT="3600"  # 1 hour
 export CLAUDE_MAX_HISTORY="10"        # Keep last 10 messages
-export CLAUDE_MAX_TURNS="10"          # Max agentic loop iterations for tool usage
-```
-
-**Optional Tool Enablement:**
-```bash
-# Enable additional tools (disabled by default for security)
-export CLAUDE_ENABLE_COMMAND_EXECUTION="true"  # Enable execute_command tool
-export CLAUDE_ENABLE_FILE_WRITE="true"         # Enable write_file tool
 ```
 
 **Optional System Prompt:**
@@ -271,14 +263,16 @@ You can run multiple Claude servers with different personas for specialized task
 
 ## Available Tools
 
+This MCP server provides **3 core tools** for AI-powered information retrieval and conversation:
+
 ### query
 
-Main entrypoint for querying Claude AI with support for multi-turn conversations, agentic tool usage, and **multimodal inputs**.
+Query Claude AI with intelligent response generation. Supports multi-turn conversations with session management and multimodal inputs.
 
 **Parameters:**
 - `prompt` (string, required): The text prompt to send to Claude
 - `sessionId` (string, optional): Conversation session ID for multi-turn conversations
-- `parts` (array, optional): Multimodal content parts (images, text, PDF documents)
+- `parts` (array, optional): Multimodal content parts (images, PDF documents)
   - Each part can contain:
     - `text`: Additional text content
     - `inlineData`: Base64-encoded file data with `mimeType` and `data` fields (supports image/* and application/pdf)
@@ -288,12 +282,9 @@ Main entrypoint for querying Claude AI with support for multi-turn conversations
 1. Receives the prompt, optional session ID, and optional multimodal parts
 2. Retrieves conversation history if session ID provided
 3. Creates new session if conversations enabled but no session ID given
-4. Processes multimodal content if provided (images, text, PDF documents)
+4. Processes multimodal content if provided (images, PDF documents)
 5. Sends query to Claude with conversation context and multimodal content
-6. Claude Agent SDK automatically handles tool usage through agentic loops (up to `CLAUDE_MAX_TURNS`)
-7. If MCP servers are configured, Claude can automatically discover and use their tools
-8. Saves conversation history for future turns
-9. Returns response with session ID and token usage statistics
+6. Returns response with session ID and token usage statistics
 
 **Examples:**
 ```
@@ -330,10 +321,6 @@ parts: [
     }
   }
 ]
-
-# Complex query with agentic tool usage
-query: "Review this code for security issues: [code snippet]"
-→ Leverages Claude's code understanding and may automatically use tools
 ```
 
 **Response Includes:**
@@ -341,92 +328,46 @@ query: "Review this code for security issues: [code snippet]"
 - Session ID (if conversations enabled)
 - Token usage: Input tokens and output tokens
 
-### read_file
+### search
 
-Read content from files in allowed directories.
-
-**Parameters:**
-- `path` (string, required): Path to the file to read
-
-**Security:**
-- Only allows reading from: current working directory, Documents, Downloads, Desktop
-- Prevents path traversal attacks
-- Maximum file size: 10MB
-- Rejects executable files
-
-**Example:**
-```
-read_file: "/path/to/file.txt"
-→ Returns file content
-```
-
-### write_file
-
-Write content to files in allowed directories (requires `CLAUDE_ENABLE_FILE_WRITE=true`).
+Search for information using Claude. Returns a list of relevant search results following the OpenAI MCP specification for search tools.
 
 **Parameters:**
-- `path` (string, required): Path to the file to write
-- `content` (string, required): Content to write to the file
+- `query` (string, required): The search query
 
-**Security:**
-- Disabled by default - must set `CLAUDE_ENABLE_FILE_WRITE=true`
-- Only allows writing to: current working directory, Documents, Downloads, Desktop
-- Prevents path traversal attacks
-- Maximum file size: 10MB
-- Rejects executable files
+**Response Format:**
+- Array of search results with document IDs and metadata
+- Results can be fetched using the `fetch` tool
 
-**Example:**
+**Examples:**
 ```
-write_file: 
-  path: "/path/to/output.txt"
-  content: "Hello, World!"
-→ Writes content to file
+# Search for information
+search: "climate change impacts on agriculture"
+→ Returns: Array of relevant search results
+
+# Follow-up with fetch to get full content
+fetch:
+  id: "result-123"
+→ Returns: Full document content
 ```
 
-### web_fetch
+### fetch
 
-Fetch and extract content from web URLs with comprehensive security protections.
+Fetch the full contents of a search result document by its ID. Follows the OpenAI MCP specification for fetch tools.
 
 **Parameters:**
-- `url` (string, required): HTTPS URL to fetch (HTTP not allowed)
-- `extract` (boolean, optional): Extract main content from HTML (default: true)
+- `id` (string, required): The unique identifier for the document to fetch
 
-**Security:**
-- **HTTPS only**: HTTP URLs are rejected
-- **Private IP blocking**: Blocks 10.x, 172.16.x, 192.168.x, 127.x, 169.254.x
-- **Cloud metadata blocking**: Blocks AWS, GCP, Azure metadata endpoints
-- **Redirect validation**: Manual redirect handling with security checks (max 5 redirects)
-- **Content boundaries**: 50KB size limit, external content tagged
-- **Prompt injection protection**: External content wrapped with security tags
+**Response Format:**
+- Full document content
+- Can be used after `search` tool to retrieve complete article/document
 
-**Example:**
+**Examples:**
 ```
-web_fetch: 
-  url: "https://example.com/article"
-  extract: true
-→ Returns extracted main content wrapped in security tags
-```
-
-### execute_command
-
-Execute shell commands (requires `CLAUDE_ENABLE_COMMAND_EXECUTION=true`).
-
-**Parameters:**
-- `command` (string, required): The shell command to execute
-- `workingDirectory` (string, optional): Working directory for command execution
-
-**Security:**
-- Disabled by default - must set `CLAUDE_ENABLE_COMMAND_EXECUTION=true`
-- Command timeout: 30 seconds
-- Maximum output size: 100KB
-- Use with caution - can execute arbitrary commands
-
-**Example:**
-```
-execute_command:
-  command: "ls -la"
-  workingDirectory: "/tmp"
-→ Returns command output
+# After searching, fetch a specific result
+fetch:
+  id: "doc-abc-123"
+→ Returns: Full document content
 ```
 
 ## Architecture
@@ -703,16 +644,14 @@ export CLAUDE_LOG_DIR="/tmp/claude-logs"
 
 ### Implemented Features
 
-- [x] **Agentic Loop**: Turn-based execution with automatic tool selection via Claude Agent SDK
-- [x] **Tool Execution**: Built-in tools (bash commands, file operations, web fetch)
-  - [x] `execute_command`: Execute shell commands (requires `CLAUDE_ENABLE_COMMAND_EXECUTION=true`)
-  - [x] `read_file`: Read files from allowed directories
-  - [x] `write_file`: Write files to allowed directories (requires `CLAUDE_ENABLE_FILE_WRITE=true`)
-  - [x] `web_fetch`: Fetch and extract content from HTTPS URLs
-- [x] **Security**: Multi-layer defense with SSRF protection, prompt injection guardrails, file security
-- [x] **Multi-provider Support**: Anthropic, Vertex AI, AWS Bedrock
-- [x] **MCP-to-MCP Connectivity**: Integration with external MCP servers via Claude Agent SDK
+- [x] **Query Tool**: Query Claude AI with multi-turn conversation support
+- [x] **Search Tool**: Search for information using Claude
+- [x] **Fetch Tool**: Retrieve full content of search results
 - [x] **Multimodal Support**: Images, text, and PDF documents via optional `parts` parameter
+- [x] **Session Management**: Multi-turn conversations with automatic session creation and cleanup
+- [x] **Multi-provider Support**: Anthropic, Vertex AI, AWS Bedrock
+- [x] **Security**: Input validation, session isolation, token limiting
+- [x] **Logging**: File-based and stderr logging with configurable output
 
 ### Planned Features
 

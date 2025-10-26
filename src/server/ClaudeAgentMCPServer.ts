@@ -1,6 +1,6 @@
 /**
- * Claude Agent MCP Server
- * Main server class that orchestrates all components
+ * ClaudeAgentMCPServer - Main MCP server implementation
+ * Orchestrates all components and handles MCP protocol
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -10,92 +10,34 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-import { ClaudeAgentConfig } from '../types/index.js';
-import { ClaudeAIService } from '../services/ClaudeAIService.js';
+import { ClaudeAgentConfig, CachedDocument } from '../types/index.js';
+import { QuerySchema, SearchSchema, FetchSchema } from '../schemas/index.js';
 import { ConversationManager } from '../managers/ConversationManager.js';
-import { QueryHandler } from '../handlers/QueryHandler.js';
-import { ExecuteCommandHandler } from '../handlers/ExecuteCommandHandler.js';
-import { ReadFileHandler } from '../handlers/ReadFileHandler.js';
-import { WriteFileHandler } from '../handlers/WriteFileHandler.js';
-import { WebFetchHandler } from '../handlers/WebFetchHandler.js';
+import { ClaudeAIService } from '../services/ClaudeAIService.js';
 import { Logger } from '../utils/Logger.js';
-import {
-  QuerySchema,
-  QueryInput,
-  ExecuteCommandSchema,
-  ExecuteCommandInput,
-  ReadFileSchema,
-  ReadFileInput,
-  WriteFileSchema,
-  WriteFileInput,
-  WebFetchSchema,
-  WebFetchInput,
-} from '../schemas/index.js';
+import { QueryHandler } from '../handlers/QueryHandler.js';
+import { SearchHandler } from '../handlers/SearchHandler.js';
+import { FetchHandler } from '../handlers/FetchHandler.js';
 
 export class ClaudeAgentMCPServer {
   private server: Server;
-  private claudeAI: ClaudeAIService;
-  private conversationManager: ConversationManager | null;
-  private queryHandler: QueryHandler;
-  private executeCommandHandler: ExecuteCommandHandler;
-  private readFileHandler: ReadFileHandler;
-  private writeFileHandler: WriteFileHandler;
-  private webFetchHandler: WebFetchHandler;
-  private logger: Logger;
   private config: ClaudeAgentConfig;
+
+  // Core components
+  private conversationManager: ConversationManager | null;
+  private claudeAI: ClaudeAIService;
+  private logger: Logger;
+
+  // Handlers
+  private queryHandler: QueryHandler;
+  private searchHandler: SearchHandler;
+  private fetchHandler: FetchHandler;
+
+  // Cache
+  private searchCache: Map<string, CachedDocument>;
 
   constructor(config: ClaudeAgentConfig) {
     this.config = config;
-    
-    // Initialize logger
-    this.logger = new Logger(
-      config.logDir,
-      config.disableLogging,
-      config.logToStderr
-    );
-
-    this.logger.info('Initializing Claude Agent MCP Server', {
-      provider: config.provider,
-      model: config.model,
-      conversationsEnabled: config.enableConversations,
-      commandExecutionEnabled: config.enableCommandExecution,
-      fileWriteEnabled: config.enableFileWrite,
-    });
-
-    // Initialize services
-    this.claudeAI = new ClaudeAIService(config, this.logger);
-
-    // Initialize conversation manager if enabled
-    this.conversationManager = config.enableConversations
-      ? new ConversationManager(
-          config.sessionTimeout,
-          config.maxHistory,
-          this.logger
-        )
-      : null;
-
-    // Initialize handlers
-    this.queryHandler = new QueryHandler(
-      this.claudeAI,
-      this.conversationManager,
-      this.logger
-    );
-    
-    this.executeCommandHandler = new ExecuteCommandHandler(
-      this.logger,
-      config.enableCommandExecution
-    );
-    
-    this.readFileHandler = new ReadFileHandler(this.logger);
-    
-    this.writeFileHandler = new WriteFileHandler(
-      this.logger,
-      config.enableFileWrite
-    );
-    
-    this.webFetchHandler = new WebFetchHandler(this.logger);
-
-    // Initialize MCP server
     this.server = new Server(
       {
         name: "claude-agent-mcp-server",
@@ -108,37 +50,77 @@ export class ClaudeAgentMCPServer {
       }
     );
 
+    // Initialize cache
+    this.searchCache = new Map();
+
+    // Initialize logger
+    this.logger = new Logger(
+      config.logDir,
+      config.disableLogging,
+      config.logToStderr
+    );
+
+    // Initialize conversation manager if enabled
+    this.conversationManager = config.enableConversations
+      ? new ConversationManager(
+          config.sessionTimeout,
+          config.maxHistory,
+          this.logger
+        )
+      : null;
+
+    // Initialize services
+    this.claudeAI = new ClaudeAIService(config, this.logger);
+
+    // Initialize handlers
+    this.queryHandler = new QueryHandler(
+      this.claudeAI,
+      this.conversationManager,
+      this.logger
+    );
+    this.searchHandler = new SearchHandler(
+      this.claudeAI,
+      this.searchCache,
+      this.logger
+    );
+    this.fetchHandler = new FetchHandler(
+      this.searchCache,
+      this.logger
+    );
+
     this.setupHandlers();
   }
 
   /**
-   * Setup MCP request handlers
+   * Setup MCP protocol handlers
    */
   private setupHandlers(): void {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      this.logger.info('Received tools/list request');
-      
-      const tools: any[] = [
+      const tools = [
         {
           name: "query",
-          description: "Send a query to Claude AI assistant. Supports multi-turn conversations with session management. " +
-            "Supports multimodal inputs (images, text, PDF documents) via the optional 'parts' parameter. " +
-            "Can automatically use tools from connected MCP servers when CLAUDE_MCP_SERVERS is configured.",
+          description:
+            "Query Claude AI with a prompt. " +
+            "This tool operates as an intelligent agent with multi-turn execution capabilities. " +
+            "The agent can automatically use available tools from connected MCP servers " +
+            "to gather information and provide comprehensive answers. " +
+            "Supports multi-turn conversations when sessionId is provided. " +
+            "Supports multimodal inputs (images, PDF documents) via the optional 'parts' parameter.",
           inputSchema: {
             type: "object",
             properties: {
               prompt: {
                 type: "string",
-                description: "The text prompt to send to Claude"
+                description: "The prompt to send to Claude",
               },
               sessionId: {
                 type: "string",
-                description: "Optional conversation session ID for multi-turn conversations"
+                description: "Optional conversation session ID for multi-turn conversations",
               },
               parts: {
                 type: "array",
-                description: "Optional multimodal content parts (images, text, PDF documents)",
+                description: "Optional multimodal content parts (images, PDF documents)",
                 items: {
                   type: "object",
                   properties: {
@@ -180,135 +162,77 @@ export class ClaudeAgentMCPServer {
                 }
               }
             },
-            required: ["prompt"]
-          }
+            required: ["prompt"],
+          },
         },
         {
-          name: "read_file",
-          description: "Read content from a file. Files must be in allowed directories (current working directory, Documents, Downloads, Desktop).",
+          name: "search",
+          description:
+            "Search for information using Claude. Returns a list of relevant search results. " +
+            "Follows OpenAI MCP specification for search tools.",
           inputSchema: {
             type: "object",
             properties: {
-              path: {
+              query: {
                 type: "string",
-                description: "Path to the file to read"
-              }
-            },
-            required: ["path"]
-          }
-        },
-        {
-          name: "web_fetch",
-          description: "Fetch content from a URL. Only HTTPS URLs are allowed. External content is tagged for security.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              url: {
-                type: "string",
-                description: "HTTPS URL to fetch (HTTP not allowed for security)"
+                description: "The search query",
               },
-              extract: {
-                type: "boolean",
-                description: "Extract main content from HTML (default: true)"
-              }
             },
-            required: ["url"]
-          }
-        }
+            required: ["query"],
+          },
+        },
+        {
+          name: "fetch",
+          description:
+            "Fetch the full contents of a search result document by its ID. " +
+            "Follows OpenAI MCP specification for fetch tools.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+                description: "The unique identifier for the document to fetch",
+              },
+            },
+            required: ["id"],
+          },
+        },
       ];
-      
-      // Add conditional tools
-      if (this.config.enableFileWrite) {
-        tools.push({
-          name: "write_file",
-          description: "Write content to a file. Files must be in allowed directories. Requires CLAUDE_ENABLE_FILE_WRITE=true.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              path: {
-                type: "string",
-                description: "Path to the file to write"
-              },
-              content: {
-                type: "string",
-                description: "Content to write to the file"
-              }
-            },
-            required: ["path", "content"]
-          }
-        });
-      }
-      
-      if (this.config.enableCommandExecution) {
-        tools.push({
-          name: "execute_command",
-          description: "Execute a shell command. Requires CLAUDE_ENABLE_COMMAND_EXECUTION=true. Use with caution.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              command: {
-                type: "string",
-                description: "The shell command to execute"
-              },
-              workingDirectory: {
-                type: "string",
-                description: "Working directory for command execution"
-              }
-            },
-            required: ["command"]
-          }
-        });
-      }
-      
+
       return { tools };
     });
 
-    // Handle tool calls
+    // Handle tool calls with switch-case statement
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      this.logger.info('Received tools/call request', { 
-        toolName: request.params.name 
-      });
-
-      const { name, arguments: args } = request.params;
+      const toolName = request.params.name;
+      const args = request.params.arguments || {};
 
       try {
         let result: string;
-        
-        switch (name) {
+
+        switch (toolName) {
           case "query": {
-            const input = QuerySchema.parse(args) as QueryInput;
+            const input = QuerySchema.parse(args);
             result = await this.queryHandler.handle(input);
             break;
           }
-          
-          case "execute_command": {
-            const input = ExecuteCommandSchema.parse(args) as ExecuteCommandInput;
-            result = await this.executeCommandHandler.handle(input);
+
+          case "search": {
+            const input = SearchSchema.parse(args);
+            result = await this.searchHandler.handle(input);
             break;
           }
-          
-          case "read_file": {
-            const input = ReadFileSchema.parse(args) as ReadFileInput;
-            result = await this.readFileHandler.handle(input);
-            break;
-          }
-          
-          case "write_file": {
-            const input = WriteFileSchema.parse(args) as WriteFileInput;
-            result = await this.writeFileHandler.handle(input);
-            break;
-          }
-          
-          case "web_fetch": {
-            const input = WebFetchSchema.parse(args) as WebFetchInput;
-            result = await this.webFetchHandler.handle(input);
+
+          case "fetch": {
+            const input = FetchSchema.parse(args);
+            result = await this.fetchHandler.handle(input);
             break;
           }
 
           default:
-            throw new Error(`Unknown tool: ${name}`);
+            throw new Error(`Unknown tool: ${toolName}`);
         }
-        
+
         return {
           content: [
             {
@@ -318,11 +242,11 @@ export class ClaudeAgentMCPServer {
           ]
         };
       } catch (error) {
-        this.logger.error('Error executing tool', { 
-          toolName: name,
+        this.logger.error('Error executing tool', {
+          toolName,
           error: error instanceof Error ? error.message : String(error)
         });
-        
+
         return {
           content: [
             {
@@ -337,14 +261,15 @@ export class ClaudeAgentMCPServer {
   }
 
   /**
-   * Start the server
+   * Start the MCP server
    */
   async run(): Promise<void> {
-    this.logger.info('Starting Claude Agent MCP Server');
-    
+    this.logger.info('Initializing Claude AI MCP Server');
+
+    // Start server
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    
-    this.logger.info('Server started and listening on stdio');
+
+    this.logger.info("Claude AI MCP Server running on stdio");
   }
 }
