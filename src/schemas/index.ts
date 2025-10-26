@@ -4,16 +4,16 @@
 
 import { z } from "zod";
 
-// Schema for inline data (base64 encoded files)
+// Schema for inline data (base64 encoded files - images and PDFs)
 const InlineDataSchema = z.object({
-  mimeType: z.string().describe("MIME type of the file (e.g., 'image/jpeg', 'audio/mp3', 'video/mp4')"),
+  mimeType: z.string().describe("MIME type of the file (e.g., 'image/jpeg', 'image/png', 'application/pdf')"),
   data: z.string().describe("Base64 encoded file data"),
 });
 
-// Schema for file data (URIs - Cloud Storage, HTTPS, or file://)
+// Schema for file data (URIs for images and PDFs)
 const FileDataSchema = z.object({
-  mimeType: z.string().describe("MIME type of the file"),
-  fileUri: z.string().describe("URI of the file (file:// for local files, https:// for public URLs, or cloud storage URIs)"),
+  mimeType: z.string().describe("MIME type of the file (image/* or application/pdf)"),
+  fileUri: z.string().describe("URI of the file (file:// for local files, https:// for public URLs)"),
 });
 
 // Schema for a single multimodal part
@@ -26,7 +26,7 @@ const MultimodalPartSchema = z.object({
 export const QuerySchema = z.object({
   prompt: z.string().describe("The text prompt to send to Claude"),
   sessionId: z.string().optional().describe("Optional conversation session ID for multi-turn conversations"),
-  parts: z.array(MultimodalPartSchema).optional().describe("Optional multimodal content parts (images, audio, video, documents)"),
+  parts: z.array(MultimodalPartSchema).optional().describe("Optional multimodal content parts (images, text, PDF documents)"),
 });
 
 export const ExecuteCommandSchema = z.object({

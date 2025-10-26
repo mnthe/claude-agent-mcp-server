@@ -123,7 +123,7 @@ export class ClaudeAgentMCPServer {
         {
           name: "query",
           description: "Send a query to Claude AI assistant. Supports multi-turn conversations with session management. " +
-            "Supports multimodal inputs (images, audio, video, documents) via the optional 'parts' parameter. " +
+            "Supports multimodal inputs (images, text, PDF documents) via the optional 'parts' parameter. " +
             "Can automatically use tools from connected MCP servers when CLAUDE_MCP_SERVERS is configured.",
           inputSchema: {
             type: "object",
@@ -138,7 +138,7 @@ export class ClaudeAgentMCPServer {
               },
               parts: {
                 type: "array",
-                description: "Optional multimodal content parts (images, audio, video, documents)",
+                description: "Optional multimodal content parts (images, text, PDF documents)",
                 items: {
                   type: "object",
                   properties: {
@@ -152,7 +152,7 @@ export class ClaudeAgentMCPServer {
                       properties: {
                         mimeType: {
                           type: "string",
-                          description: "MIME type of the file (e.g., 'image/jpeg', 'audio/mp3', 'video/mp4')"
+                          description: "MIME type of the file (e.g., 'image/jpeg', 'image/png', 'application/pdf')"
                         },
                         data: {
                           type: "string",
