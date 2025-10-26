@@ -103,7 +103,7 @@ export ANTHROPIC_API_KEY="your-api-key-here"
 
 **Optional Model Settings:**
 ```bash
-export CLAUDE_MODEL="claude-sonnet-4-5-20250514"  # or claude-haiku-4-5-20250514, claude-opus-4-1-20250514
+export CLAUDE_MODEL="claude-sonnet-4-5-20250929"  # or claude-haiku-4-5-20251001, claude-opus-4-1-20250805
 export CLAUDE_TEMPERATURE="1.0"
 export CLAUDE_MAX_TOKENS="8192"
 ```
@@ -201,7 +201,7 @@ Add to your MCP client configuration:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "ANTHROPIC_API_KEY": "your-api-key-here",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514",
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
     }
@@ -218,7 +218,7 @@ Add to your MCP client configuration:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "ANTHROPIC_API_KEY": "your-api-key-here",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514"
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     }
   }
@@ -699,23 +699,6 @@ export CLAUDE_LOG_DIR="/tmp/claude-logs"
 - Check `CLAUDE_MAX_HISTORY` setting
 - Ensure using same `sessionId` across queries
 
-## Comparison with gemini-mcp-server
-
-This project is inspired by and follows the architecture of [gemini-mcp-server](https://github.com/mnthe/gemini-mcp-server), adapted for Claude:
-
-| Feature | gemini-mcp-server | claude-agent-mcp-server |
-|---------|-------------------|-------------------------|
-| AI Model | Google Gemini | Anthropic Claude |
-| SDK | @google/genai | @anthropic-ai/claude-agent-sdk |
-| Multi-turn Conversations | ✅ | ✅ |
-| System Prompt Customization | ✅ | ✅ |
-| Session Management | ✅ | ✅ |
-| File-based Logging | ✅ | ✅ |
-| Agentic Loop | ✅ | ✅ |
-| Tool Execution | ✅ (WebFetch, bash, files) | ✅ (WebFetch, bash, files) |
-| MCP-to-MCP Connectivity | ✅ | ✅ |
-| Multimodal Support | ✅ (images, audio, video) | ✅ (images, text, PDFs) |
-
 ## Roadmap
 
 ### Implemented Features
@@ -766,7 +749,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Inspired by [gemini-mcp-server](https://github.com/mnthe/gemini-mcp-server)
 - Built with [Anthropic Claude Agent SDK](https://docs.claude.com/en/api/agent-sdk/overview)
 - Uses [Model Context Protocol](https://github.com/modelcontextprotocol/typescript-sdk)
 

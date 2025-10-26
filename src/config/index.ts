@@ -20,7 +20,7 @@ export function loadConfig(): ClaudeAgentConfig {
   }
 
   // Model and parameters
-  const model = process.env.CLAUDE_MODEL || "claude-sonnet-4-5-20250514";
+  const model = process.env.CLAUDE_MODEL || "claude-sonnet-4-5-20250929";
   const temperature = parseFloat(process.env.CLAUDE_TEMPERATURE || "1.0");
   const maxTokens = parseInt(process.env.CLAUDE_MAX_TOKENS || "16384", 10);
 
