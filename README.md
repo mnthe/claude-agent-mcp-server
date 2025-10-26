@@ -94,6 +94,14 @@ export CLAUDE_MAX_TOKENS="8192"
 export CLAUDE_ENABLE_CONVERSATIONS="true"
 export CLAUDE_SESSION_TIMEOUT="3600"  # 1 hour
 export CLAUDE_MAX_HISTORY="10"        # Keep last 10 messages
+export CLAUDE_MAX_TURNS="10"          # Max agentic loop iterations for tool usage
+```
+
+**Optional Tool Enablement:**
+```bash
+# Enable additional tools (disabled by default for security)
+export CLAUDE_ENABLE_COMMAND_EXECUTION="true"  # Enable execute_command tool
+export CLAUDE_ENABLE_FILE_WRITE="true"         # Enable write_file tool
 ```
 
 **Optional System Prompt:**
