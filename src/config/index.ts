@@ -9,15 +9,6 @@ export function loadConfig(): ClaudeAgentConfig {
   // Determine provider (default: anthropic)
   const provider = (process.env.CLAUDE_PROVIDER || 'anthropic') as ProviderType;
 
-  // Validate authentication based on provider
-  // Claude Agent SDK reads credentials from environment variables directly
-  if (provider === 'anthropic' && !process.env.ANTHROPIC_API_KEY) {
-    console.error(
-      "Error: ANTHROPIC_API_KEY environment variable is required for anthropic provider"
-    );
-    process.exit(1);
-  }
-
   // Model and parameters
   const model = process.env.CLAUDE_MODEL || "claude-sonnet-4-5-20250929";
   const temperature = parseFloat(process.env.CLAUDE_TEMPERATURE || "1.0");
@@ -37,26 +28,21 @@ export function loadConfig(): ClaudeAgentConfig {
   // System prompt override - allows customization of AI assistant behavior
   const systemPrompt = process.env.CLAUDE_SYSTEM_PROMPT;
 
-  // Provider-specific configuration
-  const vertexProjectId = process.env.VERTEX_PROJECT_ID;
-  const vertexLocation = process.env.VERTEX_LOCATION || "us-central1";
-  const bedrockRegion = process.env.BEDROCK_REGION || "us-east-1";
-
-  // Validate provider-specific requirements
-  if (provider === 'vertex' && !vertexProjectId) {
-    console.error("Error: VERTEX_PROJECT_ID is required when using Vertex AI provider");
-    process.exit(1);
-  }
-
-  // Set Claude Agent SDK environment variables based on provider
-  // These are used by the Agent SDK to configure the backend
-  if (provider === 'vertex') {
-    process.env.CLAUDE_CODE_USE_VERTEX = '1';
-    process.env.GCLOUD_PROJECT = vertexProjectId;
-    process.env.GCLOUD_REGION = vertexLocation;
-  } else if (provider === 'bedrock') {
-    process.env.CLAUDE_CODE_USE_BEDROCK = '1';
-    process.env.AWS_REGION = bedrockRegion;
+  // Set Claude Agent SDK flags based on provider
+  // Provider-specific credentials are read from standard environment variables:
+  // - Anthropic: ANTHROPIC_API_KEY
+  // - Vertex AI: ANTHROPIC_VERTEX_PROJECT_ID, CLOUD_ML_REGION (+ GCP Application Default Credentials)
+  // - Bedrock: AWS_REGION (+ AWS credentials via default credentials chain)
+  switch (provider) {
+    case 'vertex':
+      process.env.CLAUDE_CODE_USE_VERTEX = '1';
+      break;
+    case 'bedrock':
+      process.env.CLAUDE_CODE_USE_BEDROCK = '1';
+      break;
+    case 'anthropic':
+      // No additional env vars needed - uses ANTHROPIC_API_KEY directly
+      break;
   }
 
   // Parse MCP server configurations
@@ -85,8 +71,5 @@ export function loadConfig(): ClaudeAgentConfig {
     logToStderr,
     systemPrompt,
     mcpServers,
-    vertexProjectId,
-    vertexLocation,
-    bedrockRegion,
   };
 }

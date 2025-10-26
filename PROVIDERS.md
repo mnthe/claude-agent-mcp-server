@@ -157,11 +157,13 @@ If running on AWS infrastructure, use an IAM role with Bedrock permissions:
 ```bash
 # Required
 export CLAUDE_PROVIDER="bedrock"
-export BEDROCK_REGION="us-east-1"
+export AWS_REGION="us-east-1"  # Standard AWS env var
 
 # Optional: model configuration
 export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
 ```
+
+**Note:** `CLAUDE_CODE_USE_BEDROCK=1` is set automatically by the server based on `CLAUDE_PROVIDER`.
 
 **AWS Regions with Bedrock:**
 - `us-east-1` (US East - N. Virginia)
@@ -182,7 +184,7 @@ export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "bedrock",
-        "BEDROCK_REGION": "us-east-1",
+        "AWS_REGION": "us-east-1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
@@ -205,7 +207,7 @@ In your project's `.claude.json`:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "bedrock",
-        "BEDROCK_REGION": "us-east-1",
+        "AWS_REGION": "us-east-1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     }
@@ -319,12 +321,15 @@ gcloud iam service-accounts add-iam-policy-binding \
 ```bash
 # Required
 export CLAUDE_PROVIDER="vertex"
-export VERTEX_PROJECT_ID="your-gcp-project-id"
+export ANTHROPIC_VERTEX_PROJECT_ID="your-gcp-project-id"  # Standard Claude Code env var
+export CLOUD_ML_REGION="global"  # Standard Claude Code env var
 
 # Optional
-export VERTEX_LOCATION="us-central1"  # Default region
 export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
+export DISABLE_PROMPT_CACHING=1  # If needed
 ```
+
+**Note:** `CLAUDE_CODE_USE_VERTEX=1` is set automatically by the server based on `CLAUDE_PROVIDER`.
 
 **Available Vertex AI Regions:**
 - `us-central1` (Iowa)
@@ -344,8 +349,8 @@ export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "vertex",
-        "VERTEX_PROJECT_ID": "your-gcp-project-id",
-        "VERTEX_LOCATION": "us-central1",
+        "ANTHROPIC_VERTEX_PROJECT_ID": "your-gcp-project-id",
+        "CLOUD_ML_REGION": "global",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
@@ -368,8 +373,8 @@ In your project's `.claude.json`:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "vertex",
-        "VERTEX_PROJECT_ID": "your-gcp-project-id",
-        "VERTEX_LOCATION": "us-central1",
+        "ANTHROPIC_VERTEX_PROJECT_ID": "your-gcp-project-id",
+        "CLOUD_ML_REGION": "global",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     }
@@ -408,7 +413,7 @@ You can run multiple instances of claude-agent-mcp-server with different provide
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "bedrock",
-        "BEDROCK_REGION": "us-east-1",
+        "AWS_REGION": "us-east-1",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     },
@@ -417,8 +422,8 @@ You can run multiple instances of claude-agent-mcp-server with different provide
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "vertex",
-        "VERTEX_PROJECT_ID": "your-project",
-        "VERTEX_LOCATION": "us-central1",
+        "ANTHROPIC_VERTEX_PROJECT_ID": "your-project",
+        "CLOUD_ML_REGION": "global",
         "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     }
@@ -479,7 +484,7 @@ gcloud ai models list --region=us-central1
 
 ```bash
 # Set to a supported region
-export VERTEX_LOCATION="us-central1"
+export CLOUD_ML_REGION="us-central1"
 ```
 
 #### "ECONNREFUSED" or Connection Errors
@@ -504,17 +509,17 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query","ar
 #### Test AWS Bedrock
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-api03-..."
+# Requires AWS credentials configured via ~/.aws/credentials or environment variables
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query","arguments":{"prompt":"Say hello"}}}' | \
-  CLAUDE_PROVIDER=bedrock BEDROCK_REGION=us-east-1 npx -y github:mnthe/claude-agent-mcp-server
+  CLAUDE_PROVIDER=bedrock AWS_REGION=us-east-1 npx -y github:mnthe/claude-agent-mcp-server
 ```
 
 #### Test Vertex AI
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-api03-..."
+# Requires GCP credentials configured via gcloud auth application-default login
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query","arguments":{"prompt":"Say hello"}}}' | \
-  CLAUDE_PROVIDER=vertex VERTEX_PROJECT_ID=your-project npx -y github:mnthe/claude-agent-mcp-server
+  CLAUDE_PROVIDER=vertex ANTHROPIC_VERTEX_PROJECT_ID=your-project CLOUD_ML_REGION=global npx -y github:mnthe/claude-agent-mcp-server
 ```
 
 ### Enable Debug Logging
@@ -529,8 +534,7 @@ For detailed troubleshooting, enable stderr logging:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "CLAUDE_PROVIDER": "bedrock",
-        "ANTHROPIC_API_KEY": "...",
-        "BEDROCK_REGION": "us-east-1",
+        "AWS_REGION": "us-east-1",
         "CLAUDE_LOG_TO_STDERR": "true"
       }
     }
