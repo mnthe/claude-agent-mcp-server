@@ -33,16 +33,21 @@ export class ClaudeAIService {
   /**
    * Send a query to Claude with conversation history
    * The Claude Agent SDK handles provider routing internally via environment variables
+   * Supports multi-turn agentic loops for tool usage
    */
   async query(
     prompt: string,
-    conversationHistory: Message[] = []
+    conversationHistory: Message[] = [],
+    maxTurns?: number
   ): Promise<ClaudeResponse> {
     try {
+      const turns = maxTurns ?? this.config.maxTurns;
+      
       this.logger.info('Sending query to Claude via Agent SDK', {
         provider: this.config.provider,
         model: this.config.model,
         historyLength: conversationHistory.length,
+        maxTurns: turns,
       });
 
       // Prepare system prompt
@@ -65,7 +70,7 @@ export class ClaudeAIService {
       const options: Options = {
         model: this.config.model,
         systemPrompt: systemPrompt,
-        maxTurns: 1, // Single turn for query tool
+        maxTurns: turns, // Allow multiple turns for agentic tool usage
         // Temperature and maxTokens are not directly supported in Options
         // The SDK uses its own defaults based on the model
       };
@@ -125,16 +130,21 @@ export class ClaudeAIService {
   /**
    * Send a streaming query to Claude
    * The Claude Agent SDK natively supports streaming
+   * Supports multi-turn agentic loops for tool usage
    */
   async *queryStream(
     prompt: string,
-    conversationHistory: Message[] = []
+    conversationHistory: Message[] = [],
+    maxTurns?: number
   ): AsyncGenerator<string, void, unknown> {
     try {
+      const turns = maxTurns ?? this.config.maxTurns;
+      
       this.logger.info('Sending streaming query to Claude Agent SDK', {
         provider: this.config.provider,
         model: this.config.model,
         historyLength: conversationHistory.length,
+        maxTurns: turns,
       });
 
       // Prepare system prompt
@@ -156,7 +166,7 @@ export class ClaudeAIService {
       const options: Options = {
         model: this.config.model,
         systemPrompt: systemPrompt,
-        maxTurns: 1,
+        maxTurns: turns, // Allow multiple turns for agentic tool usage
       };
 
       // Call Claude Agent SDK query function

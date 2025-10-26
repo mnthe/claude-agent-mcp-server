@@ -28,6 +28,7 @@ export function loadConfig(): ClaudeAgentConfig {
   const enableConversations = process.env.CLAUDE_ENABLE_CONVERSATIONS === "true";
   const sessionTimeout = parseInt(process.env.CLAUDE_SESSION_TIMEOUT || "3600", 10);
   const maxHistory = parseInt(process.env.CLAUDE_MAX_HISTORY || "10", 10);
+  const maxTurns = parseInt(process.env.CLAUDE_MAX_TURNS || "10", 10);
 
   // Logging configuration
   const logDir = process.env.CLAUDE_LOG_DIR;
@@ -84,6 +85,7 @@ export function loadConfig(): ClaudeAgentConfig {
     enableConversations,
     sessionTimeout,
     maxHistory,
+    maxTurns,
     logDir,
     disableLogging,
     logToStderr,

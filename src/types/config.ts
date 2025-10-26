@@ -13,6 +13,7 @@ export interface ClaudeAgentConfig {
   enableConversations: boolean;
   sessionTimeout: number;
   maxHistory: number;
+  maxTurns: number;
   logDir?: string;
   disableLogging: boolean;
   logToStderr: boolean;
