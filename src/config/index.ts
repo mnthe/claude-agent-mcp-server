@@ -1,5 +1,6 @@
 /**
  * Configuration loader for Claude Agent MCP Server
+ * Configures environment for Claude Agent SDK multi-provider support
  */
 
 import { ClaudeAgentConfig, MCPServerConfig, ProviderType } from '../types/index.js';
@@ -49,6 +50,17 @@ export function loadConfig(): ClaudeAgentConfig {
   if (provider === 'vertex' && !vertexProjectId) {
     console.error("Error: VERTEX_PROJECT_ID is required when using Vertex AI provider");
     process.exit(1);
+  }
+
+  // Set Claude Agent SDK environment variables based on provider
+  // These are used by the Agent SDK to configure the backend
+  if (provider === 'vertex') {
+    process.env.CLAUDE_CODE_USE_VERTEX = '1';
+    process.env.GCLOUD_PROJECT = vertexProjectId;
+    process.env.GCLOUD_REGION = vertexLocation;
+  } else if (provider === 'bedrock') {
+    process.env.CLAUDE_CODE_USE_BEDROCK = '1';
+    process.env.AWS_REGION = bedrockRegion;
   }
 
   // Parse MCP server configurations

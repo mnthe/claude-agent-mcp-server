@@ -1,11 +1,9 @@
 /**
- * Claude AI Service - wrapper for Anthropic SDK (multiple providers)
- * Supports: Anthropic, Vertex AI, AWS Bedrock
+ * Claude AI Service - wrapper using Claude Agent SDK approach
+ * Supports multi-provider configuration: Anthropic, Vertex AI, AWS Bedrock
+ * Uses environment variables as per Claude Agent SDK pattern
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import AnthropicVertex from '@anthropic-ai/vertex-sdk';
-import AnthropicBedrock from '@anthropic-ai/bedrock-sdk';
 import { ClaudeAgentConfig, Message } from '../types/index.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -17,46 +15,47 @@ export interface ClaudeResponse {
   };
 }
 
-type ClaudeClient = Anthropic | AnthropicVertex | AnthropicBedrock;
-
 export class ClaudeAIService {
-  private client: ClaudeClient;
   private config: ClaudeAgentConfig;
   private logger: Logger;
+  private anthropic: any;
 
   constructor(config: ClaudeAgentConfig, logger: Logger) {
     this.config = config;
     this.logger = logger;
     
-    // Initialize appropriate client based on provider
-    switch (config.provider) {
-      case 'vertex':
-        this.logger.info('Initializing Vertex AI client', {
-          projectId: config.vertexProjectId,
-          location: config.vertexLocation
-        });
-        this.client = new AnthropicVertex({
-          projectId: config.vertexProjectId!,
-          region: config.vertexLocation!,
-        });
-        break;
-      
-      case 'bedrock':
-        this.logger.info('Initializing Bedrock client', {
-          region: config.bedrockRegion
-        });
-        this.client = new AnthropicBedrock({
-          awsRegion: config.bedrockRegion!,
-        });
-        break;
-      
-      case 'anthropic':
-      default:
-        this.logger.info('Initializing Anthropic client');
-        this.client = new Anthropic({
-          apiKey: config.apiKey,
-        });
-        break;
+    // Initialize Anthropic client based on provider
+    // The Claude Agent SDK uses environment variables to configure the provider
+    this.initializeClient();
+  }
+
+  private async initializeClient() {
+    // Dynamic import based on provider configuration
+    // This follows the Claude Agent SDK pattern
+    if (this.config.provider === 'vertex') {
+      this.logger.info('Initializing Vertex AI client', {
+        projectId: this.config.vertexProjectId,
+        location: this.config.vertexLocation
+      });
+      const AnthropicVertex = (await import('@anthropic-ai/vertex-sdk')).default;
+      this.anthropic = new AnthropicVertex({
+        projectId: this.config.vertexProjectId!,
+        region: this.config.vertexLocation!,
+      });
+    } else if (this.config.provider === 'bedrock') {
+      this.logger.info('Initializing Bedrock client', {
+        region: this.config.bedrockRegion
+      });
+      const AnthropicBedrock = (await import('@anthropic-ai/bedrock-sdk')).default;
+      this.anthropic = new AnthropicBedrock({
+        awsRegion: this.config.bedrockRegion!,
+      });
+    } else {
+      this.logger.info('Initializing Anthropic client');
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      this.anthropic = new Anthropic({
+        apiKey: this.config.apiKey,
+      });
     }
   }
 
@@ -67,6 +66,11 @@ export class ClaudeAIService {
     prompt: string,
     conversationHistory: Message[] = []
   ): Promise<ClaudeResponse> {
+    // Ensure client is initialized
+    if (!this.anthropic) {
+      await this.initializeClient();
+    }
+
     try {
       this.logger.info('Sending query to Claude', {
         provider: this.config.provider,
@@ -91,7 +95,7 @@ export class ClaudeAIService {
         "You are a helpful AI assistant with access to various tools and capabilities.";
 
       // Call Claude API
-      const response: any = await (this.client as any).messages.create({
+      const response: any = await this.anthropic.messages.create({
         model: this.config.model,
         max_tokens: this.config.maxTokens,
         temperature: this.config.temperature,
@@ -131,6 +135,11 @@ export class ClaudeAIService {
     prompt: string,
     conversationHistory: Message[] = []
   ): AsyncGenerator<string, void, unknown> {
+    // Ensure client is initialized
+    if (!this.anthropic) {
+      await this.initializeClient();
+    }
+
     try {
       this.logger.info('Sending streaming query to Claude', {
         provider: this.config.provider,
@@ -155,7 +164,7 @@ export class ClaudeAIService {
         "You are a helpful AI assistant with access to various tools and capabilities.";
 
       // Call Claude API with streaming
-      const stream: any = await (this.client as any).messages.create({
+      const stream: any = await this.anthropic.messages.create({
         model: this.config.model,
         max_tokens: this.config.maxTokens,
         temperature: this.config.temperature,
