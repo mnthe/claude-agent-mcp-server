@@ -1,9 +1,10 @@
 /**
- * Claude AI Service - wrapper using Claude Agent SDK approach
- * Supports multi-provider configuration: Anthropic, Vertex AI, AWS Bedrock
- * Uses environment variables as per Claude Agent SDK pattern
+ * Claude AI Service - wrapper using Claude Agent SDK
+ * The Claude Agent SDK handles multi-provider support internally via environment variables
+ * Supports: Anthropic (default), Vertex AI, AWS Bedrock
  */
 
+import { query, type Options } from '@anthropic-ai/claude-agent-sdk';
 import { ClaudeAgentConfig, Message } from '../types/index.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -18,171 +19,171 @@ export interface ClaudeResponse {
 export class ClaudeAIService {
   private config: ClaudeAgentConfig;
   private logger: Logger;
-  private anthropic: any;
 
   constructor(config: ClaudeAgentConfig, logger: Logger) {
     this.config = config;
     this.logger = logger;
     
-    // Initialize Anthropic client based on provider
-    // The Claude Agent SDK uses environment variables to configure the provider
-    this.initializeClient();
-  }
-
-  private async initializeClient() {
-    // Dynamic import based on provider configuration
-    // This follows the Claude Agent SDK pattern
-    if (this.config.provider === 'vertex') {
-      this.logger.info('Initializing Vertex AI client', {
-        projectId: this.config.vertexProjectId,
-        location: this.config.vertexLocation
-      });
-      const AnthropicVertex = (await import('@anthropic-ai/vertex-sdk')).default;
-      this.anthropic = new AnthropicVertex({
-        projectId: this.config.vertexProjectId!,
-        region: this.config.vertexLocation!,
-      });
-    } else if (this.config.provider === 'bedrock') {
-      this.logger.info('Initializing Bedrock client', {
-        region: this.config.bedrockRegion
-      });
-      const AnthropicBedrock = (await import('@anthropic-ai/bedrock-sdk')).default;
-      this.anthropic = new AnthropicBedrock({
-        awsRegion: this.config.bedrockRegion!,
-      });
-    } else {
-      this.logger.info('Initializing Anthropic client');
-      const Anthropic = (await import('@anthropic-ai/sdk')).default;
-      this.anthropic = new Anthropic({
-        apiKey: this.config.apiKey,
-      });
-    }
+    this.logger.info('Initialized Claude Agent SDK Service', {
+      provider: config.provider,
+      model: config.model
+    });
   }
 
   /**
    * Send a query to Claude with conversation history
+   * The Claude Agent SDK handles provider routing internally via environment variables
    */
   async query(
     prompt: string,
     conversationHistory: Message[] = []
   ): Promise<ClaudeResponse> {
-    // Ensure client is initialized
-    if (!this.anthropic) {
-      await this.initializeClient();
-    }
-
     try {
-      this.logger.info('Sending query to Claude', {
+      this.logger.info('Sending query to Claude via Agent SDK', {
         provider: this.config.provider,
         model: this.config.model,
         historyLength: conversationHistory.length,
       });
 
-      // Build messages array from conversation history
-      const messages: any[] = [
-        ...conversationHistory.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ];
-
       // Prepare system prompt
       const systemPrompt = this.config.systemPrompt || 
         "You are a helpful AI assistant with access to various tools and capabilities.";
 
-      // Call Claude API
-      const response: any = await this.anthropic.messages.create({
+      // Build conversation context from history
+      // Claude Agent SDK uses streaming, so we'll build a context prompt if there's history
+      let fullPrompt = prompt;
+      if (conversationHistory.length > 0) {
+        const contextParts: string[] = ["Previous conversation:"];
+        for (const msg of conversationHistory) {
+          contextParts.push(`${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`);
+        }
+        contextParts.push(`\nCurrent query: ${prompt}`);
+        fullPrompt = contextParts.join('\n');
+      }
+
+      // Configure options for Claude Agent SDK
+      const options: Options = {
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
-        temperature: this.config.temperature,
-        system: systemPrompt,
-        messages,
+        systemPrompt: systemPrompt,
+        maxTurns: 1, // Single turn for query tool
+        // Temperature and maxTokens are not directly supported in Options
+        // The SDK uses its own defaults based on the model
+      };
+
+      // Call Claude Agent SDK query function
+      // This returns an AsyncGenerator<SDKMessage>
+      const queryStream = query({
+        prompt: fullPrompt,
+        options,
       });
 
-      // Extract text content from response
-      const content = response.content
-        .filter((block: any) => block.type === 'text')
-        .map((block: any) => block.text)
-        .join('\n');
+      // Collect all messages from the stream
+      let content = '';
+      let usage: any = undefined;
 
-      this.logger.info('Received response from Claude', {
+      for await (const message of queryStream) {
+        // SDKMessage can be UserMessage, AssistantMessage, ThinkingMessage, etc.
+        if (message.type === 'assistant') {
+          // Access the underlying APIAssistantMessage
+          const apiMessage = message.message;
+          
+          // Concatenate assistant message content
+          if (apiMessage.content && Array.isArray(apiMessage.content)) {
+            for (const block of apiMessage.content) {
+              if (block.type === 'text' && 'text' in block) {
+                content += block.text;
+              }
+            }
+          }
+          
+          // Capture usage information if available
+          if (apiMessage.usage) {
+            usage = {
+              input_tokens: apiMessage.usage.input_tokens || 0,
+              output_tokens: apiMessage.usage.output_tokens || 0,
+            };
+          }
+        }
+      }
+
+      this.logger.info('Received response from Claude Agent SDK', {
         provider: this.config.provider,
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
+        contentLength: content.length,
+        hasUsage: !!usage,
       });
 
       return {
         content,
-        usage: {
-          input_tokens: response.usage.input_tokens,
-          output_tokens: response.usage.output_tokens,
-        },
+        usage,
       };
     } catch (error) {
-      this.logger.error('Error querying Claude', { error });
+      this.logger.error('Error querying Claude Agent SDK', { error });
       throw error;
     }
   }
 
   /**
    * Send a streaming query to Claude
+   * The Claude Agent SDK natively supports streaming
    */
   async *queryStream(
     prompt: string,
     conversationHistory: Message[] = []
   ): AsyncGenerator<string, void, unknown> {
-    // Ensure client is initialized
-    if (!this.anthropic) {
-      await this.initializeClient();
-    }
-
     try {
-      this.logger.info('Sending streaming query to Claude', {
+      this.logger.info('Sending streaming query to Claude Agent SDK', {
         provider: this.config.provider,
         model: this.config.model,
         historyLength: conversationHistory.length,
       });
 
-      // Build messages array from conversation history
-      const messages: any[] = [
-        ...conversationHistory.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ];
-
       // Prepare system prompt
       const systemPrompt = this.config.systemPrompt || 
         "You are a helpful AI assistant with access to various tools and capabilities.";
 
-      // Call Claude API with streaming
-      const stream: any = await this.anthropic.messages.create({
+      // Build conversation context from history
+      let fullPrompt = prompt;
+      if (conversationHistory.length > 0) {
+        const contextParts: string[] = ["Previous conversation:"];
+        for (const msg of conversationHistory) {
+          contextParts.push(`${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`);
+        }
+        contextParts.push(`\nCurrent query: ${prompt}`);
+        fullPrompt = contextParts.join('\n');
+      }
+
+      // Configure options for Claude Agent SDK
+      const options: Options = {
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
-        temperature: this.config.temperature,
-        system: systemPrompt,
-        messages,
-        stream: true,
+        systemPrompt: systemPrompt,
+        maxTurns: 1,
+      };
+
+      // Call Claude Agent SDK query function
+      const queryStream = query({
+        prompt: fullPrompt,
+        options,
       });
 
-      for await (const chunk of stream) {
-        if (chunk.type === 'content_block_delta' && 
-            chunk.delta.type === 'text_delta') {
-          yield chunk.delta.text;
+      // Stream assistant messages
+      for await (const message of queryStream) {
+        if (message.type === 'assistant') {
+          // Access the underlying APIAssistantMessage
+          const apiMessage = message.message;
+          
+          if (apiMessage.content && Array.isArray(apiMessage.content)) {
+            for (const block of apiMessage.content) {
+              if (block.type === 'text' && 'text' in block) {
+                yield block.text;
+              }
+            }
+          }
         }
       }
 
-      this.logger.info('Completed streaming response from Claude');
+      this.logger.info('Completed streaming response from Claude Agent SDK');
     } catch (error) {
-      this.logger.error('Error streaming from Claude', { error });
+      this.logger.error('Error streaming from Claude Agent SDK', { error });
       throw error;
     }
   }
