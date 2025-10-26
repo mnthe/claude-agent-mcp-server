@@ -45,14 +45,14 @@ Built on Claude's advanced capabilities:
 - **Configurable model parameters** (temperature, max tokens)
 - **Token usage tracking** for monitoring and optimization
 
-### 🔐 Security First
+### 🔐 Security for Local Deployment
 
-**Multi-Layer Defense**:
-- **SSRF Protection**: HTTPS-only URL fetching, private IP blocking (10.x, 172.16.x, 192.168.x, 127.x, 169.254.x), cloud metadata endpoint blocking (AWS, GCP, Azure)
-- **Prompt Injection Guardrails**: External content tagging, trust boundaries, system prompt hardening
-- **File Security**: Path traversal prevention, executable file rejection, directory whitelist
-- **Redirect Validation**: Manual redirect handling with security checks, maximum 5 redirects, cross-domain blocking
-- **Content Boundaries**: 50KB size limits for web content, 10MB for file operations, external content wrapping with security tags
+**Defensive Measures**:
+- **Input Validation**: Prompt size limits (500KB), query size limits (50KB), multimodal content limits (20 parts, 20MB)
+- **Cache Management**: Automatic cleanup (max 100 entries, 1-hour TTL) to prevent memory exhaustion
+- **Logging Sanitization**: API keys masked, large data truncated in logs
+- **Session Isolation**: Conversation history separated by session ID
+- **Token Limits**: Configurable max tokens to control API costs
 
 See [SECURITY.md](SECURITY.md) for detailed security documentation and best practices.
 

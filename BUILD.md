@@ -47,7 +47,7 @@ ANTHROPIC_API_KEY=your-api-key-here
 
 # Optional (for testing)
 CLAUDE_PROVIDER=anthropic
-CLAUDE_MODEL=claude-3-5-sonnet-20241022
+CLAUDE_MODEL=claude-sonnet-4-5-20250929
 CLAUDE_ENABLE_CONVERSATIONS=true
 CLAUDE_DISABLE_LOGGING=false
 CLAUDE_LOG_TO_STDERR=true
@@ -156,17 +156,17 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | \
     "tools": [
       {
         "name": "query",
-        "description": "...",
+        "description": "Query Claude AI with a prompt...",
         "inputSchema": {...}
       },
       {
-        "name": "read_file",
-        "description": "...",
+        "name": "search",
+        "description": "Search for information using Claude...",
         "inputSchema": {...}
       },
       {
-        "name": "web_fetch",
-        "description": "...",
+        "name": "fetch",
+        "description": "Fetch the full contents of a search result document...",
         "inputSchema": {...}
       }
     ]

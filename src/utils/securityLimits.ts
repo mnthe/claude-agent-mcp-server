@@ -9,7 +9,7 @@
 export const SecurityLimits = {
   // Input size limits (prevent accidental large inputs that cause API errors)
   MAX_PROMPT_LENGTH: 500_000,  // 500KB - enough for large documents
-  MAX_QUERY_LENGTH: 10_000,     // 10KB - search queries are typically short
+  MAX_QUERY_LENGTH: 50_000,     // 50KB - allow complex search queries
 
   // Cache limits (prevent memory exhaustion from search results)
   MAX_CACHE_SIZE: 100,          // Maximum 100 cached search results

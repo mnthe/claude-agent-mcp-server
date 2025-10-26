@@ -268,13 +268,18 @@ Structured Result
 
 **Configuration Hierarchy**:
 ```
-Required:
+Required (for anthropic provider):
   ANTHROPIC_API_KEY
 
+Optional - Provider:
+  CLAUDE_PROVIDER (default: anthropic)
+  For vertex: ANTHROPIC_VERTEX_PROJECT_ID, CLOUD_ML_REGION
+  For bedrock: AWS_REGION
+
 Optional - Model:
-  CLAUDE_MODEL (default: claude-3-5-sonnet-20241022)
+  CLAUDE_MODEL (default: claude-sonnet-4-5-20250929)
   CLAUDE_TEMPERATURE (default: 1.0)
-  CLAUDE_MAX_TOKENS (default: 8192)
+  CLAUDE_MAX_TOKENS (default: 16384)
 
 Optional - Conversations:
   CLAUDE_ENABLE_CONVERSATIONS (default: false)
