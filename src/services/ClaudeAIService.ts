@@ -66,11 +66,32 @@ export class ClaudeAIService {
         fullPrompt = contextParts.join('\n');
       }
 
+      // Configure MCP servers for Claude Agent SDK
+      const mcpServers: Record<string, any> = {};
+      if (this.config.mcpServers && this.config.mcpServers.length > 0) {
+        for (const server of this.config.mcpServers) {
+          if (server.transport === 'stdio') {
+            mcpServers[server.name] = {
+              command: server.command,
+              args: server.args || [],
+              env: server.env || {},
+            };
+          } else if (server.transport === 'http') {
+            mcpServers[server.name] = {
+              type: 'http',
+              url: server.url,
+              headers: server.headers || {},
+            };
+          }
+        }
+      }
+
       // Configure options for Claude Agent SDK
       const options: Options = {
         model: this.config.model,
         systemPrompt: systemPrompt,
         maxTurns: turns, // Allow multiple turns for agentic tool usage
+        mcpServers: Object.keys(mcpServers).length > 0 ? mcpServers : undefined,
         // Temperature and maxTokens are not directly supported in Options
         // The SDK uses its own defaults based on the model
       };
@@ -162,11 +183,32 @@ export class ClaudeAIService {
         fullPrompt = contextParts.join('\n');
       }
 
+      // Configure MCP servers for Claude Agent SDK
+      const mcpServers: Record<string, any> = {};
+      if (this.config.mcpServers && this.config.mcpServers.length > 0) {
+        for (const server of this.config.mcpServers) {
+          if (server.transport === 'stdio') {
+            mcpServers[server.name] = {
+              command: server.command,
+              args: server.args || [],
+              env: server.env || {},
+            };
+          } else if (server.transport === 'http') {
+            mcpServers[server.name] = {
+              type: 'http',
+              url: server.url,
+              headers: server.headers || {},
+            };
+          }
+        }
+      }
+
       // Configure options for Claude Agent SDK
       const options: Options = {
         model: this.config.model,
         systemPrompt: systemPrompt,
         maxTurns: turns, // Allow multiple turns for agentic tool usage
+        mcpServers: Object.keys(mcpServers).length > 0 ? mcpServers : undefined,
       };
 
       // Call Claude Agent SDK query function
