@@ -29,10 +29,15 @@ Built on Claude's advanced capabilities:
 - **Token usage tracking** for monitoring and optimization
 
 ### 🔐 Security First
-- **API Key Security**: Secure credential management via environment variables
-- **Session Isolation**: Each session maintains independent conversation state
-- **Automatic Cleanup**: Expired sessions are automatically removed
-- **Configurable Logging**: Control log output and storage
+
+**Multi-Layer Defense**:
+- **SSRF Protection**: HTTPS-only URL fetching, private IP blocking (10.x, 172.16.x, 192.168.x, 127.x, 169.254.x), cloud metadata endpoint blocking (AWS, GCP, Azure)
+- **Prompt Injection Guardrails**: External content tagging, trust boundaries, system prompt hardening
+- **File Security**: Path traversal prevention, executable file rejection, directory whitelist
+- **Redirect Validation**: Manual redirect handling with security checks, maximum 5 redirects, cross-domain blocking
+- **Content Boundaries**: 50KB size limits for web content, 10MB for file operations, external content wrapping with security tags
+
+See [SECURITY.md](SECURITY.md) for detailed security documentation and best practices.
 
 ### 📝 Observability
 - File-based logging (`logs/general.log`, `logs/reasoning.log`)
@@ -374,6 +379,8 @@ export CLAUDE_SYSTEM_PROMPT="You are an academic research assistant. When respon
 4. Use formal academic language"
 ```
 
+See [examples/custom-prompts.md](examples/custom-prompts.md) for more ready-to-use templates.
+
 ### Logging Configuration
 
 Control how the server logs information:
@@ -526,13 +533,25 @@ This project is inspired by and follows the architecture of [gemini-mcp-server](
 
 ## Contributing
 
-Contributions are welcome! Please follow these guidelines:
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
+Quick start:
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+## Documentation
+
+- [SECURITY.md](SECURITY.md) - **Security documentation and best practices**
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design
+- [DIRECTORY_STRUCTURE.md](DIRECTORY_STRUCTURE.md) - Code organization
+- [IMPLEMENTATION.md](IMPLEMENTATION.md) - Implementation details
+- [BUILD.md](BUILD.md) - Build and release process
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- [BUILD_SUMMARY.md](BUILD_SUMMARY.md) - Project metrics
+- [examples/custom-prompts.md](examples/custom-prompts.md) - System prompt templates
 
 ## License
 
@@ -541,11 +560,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Inspired by [gemini-mcp-server](https://github.com/mnthe/gemini-mcp-server)
-- Built with [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-typescript)
+- Built with [Anthropic Claude Agent SDK](https://docs.claude.com/en/api/agent-sdk/overview)
 - Uses [Model Context Protocol](https://github.com/modelcontextprotocol/typescript-sdk)
 
 ## Support
 
 - [Report Issues](https://github.com/mnthe/claude-agent-mcp-server/issues)
 - [Anthropic Documentation](https://docs.anthropic.com/)
+- [Claude Agent SDK Docs](https://docs.claude.com/en/api/agent-sdk/overview)
 - [MCP Documentation](https://modelcontextprotocol.io/)
