@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "claude-agent": {
+      "command": "npx",
+      "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
+      "env": {
+        "ANTHROPIC_API_KEY": "your-api-key-here",
+        "CLAUDE_MODEL": "claude-3-5-sonnet-20241022",
+        "CLAUDE_ENABLE_CONVERSATIONS": "true",
+        "CLAUDE_SESSION_TIMEOUT": "3600",
+        "CLAUDE_MAX_HISTORY": "10",
+        "CLAUDE_DISABLE_LOGGING": "false"
+      }
+    }
+  }
+}
