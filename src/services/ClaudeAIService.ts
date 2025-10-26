@@ -1,8 +1,11 @@
 /**
- * Claude AI Service - wrapper for Anthropic SDK
+ * Claude AI Service - wrapper for Anthropic SDK (multiple providers)
+ * Supports: Anthropic, Vertex AI, AWS Bedrock
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import AnthropicVertex from '@anthropic-ai/vertex-sdk';
+import AnthropicBedrock from '@anthropic-ai/bedrock-sdk';
 import { ClaudeAgentConfig, Message } from '../types/index.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -14,17 +17,47 @@ export interface ClaudeResponse {
   };
 }
 
+type ClaudeClient = Anthropic | AnthropicVertex | AnthropicBedrock;
+
 export class ClaudeAIService {
-  private client: Anthropic;
+  private client: ClaudeClient;
   private config: ClaudeAgentConfig;
   private logger: Logger;
 
   constructor(config: ClaudeAgentConfig, logger: Logger) {
     this.config = config;
     this.logger = logger;
-    this.client = new Anthropic({
-      apiKey: config.apiKey,
-    });
+    
+    // Initialize appropriate client based on provider
+    switch (config.provider) {
+      case 'vertex':
+        this.logger.info('Initializing Vertex AI client', {
+          projectId: config.vertexProjectId,
+          location: config.vertexLocation
+        });
+        this.client = new AnthropicVertex({
+          projectId: config.vertexProjectId!,
+          region: config.vertexLocation!,
+        });
+        break;
+      
+      case 'bedrock':
+        this.logger.info('Initializing Bedrock client', {
+          region: config.bedrockRegion
+        });
+        this.client = new AnthropicBedrock({
+          awsRegion: config.bedrockRegion!,
+        });
+        break;
+      
+      case 'anthropic':
+      default:
+        this.logger.info('Initializing Anthropic client');
+        this.client = new Anthropic({
+          apiKey: config.apiKey,
+        });
+        break;
+    }
   }
 
   /**
@@ -36,18 +69,19 @@ export class ClaudeAIService {
   ): Promise<ClaudeResponse> {
     try {
       this.logger.info('Sending query to Claude', {
+        provider: this.config.provider,
         model: this.config.model,
         historyLength: conversationHistory.length,
       });
 
       // Build messages array from conversation history
-      const messages: Anthropic.MessageParam[] = [
+      const messages: any[] = [
         ...conversationHistory.map(msg => ({
-          role: msg.role as 'user' | 'assistant',
+          role: msg.role,
           content: msg.content,
         })),
         {
-          role: 'user' as const,
+          role: 'user',
           content: prompt,
         },
       ];
@@ -57,7 +91,7 @@ export class ClaudeAIService {
         "You are a helpful AI assistant with access to various tools and capabilities.";
 
       // Call Claude API
-      const response = await this.client.messages.create({
+      const response: any = await (this.client as any).messages.create({
         model: this.config.model,
         max_tokens: this.config.maxTokens,
         temperature: this.config.temperature,
@@ -67,11 +101,12 @@ export class ClaudeAIService {
 
       // Extract text content from response
       const content = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-        .map(block => block.text)
+        .filter((block: any) => block.type === 'text')
+        .map((block: any) => block.text)
         .join('\n');
 
       this.logger.info('Received response from Claude', {
+        provider: this.config.provider,
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
       });
@@ -98,18 +133,19 @@ export class ClaudeAIService {
   ): AsyncGenerator<string, void, unknown> {
     try {
       this.logger.info('Sending streaming query to Claude', {
+        provider: this.config.provider,
         model: this.config.model,
         historyLength: conversationHistory.length,
       });
 
       // Build messages array from conversation history
-      const messages: Anthropic.MessageParam[] = [
+      const messages: any[] = [
         ...conversationHistory.map(msg => ({
-          role: msg.role as 'user' | 'assistant',
+          role: msg.role,
           content: msg.content,
         })),
         {
-          role: 'user' as const,
+          role: 'user',
           content: prompt,
         },
       ];
@@ -119,7 +155,7 @@ export class ClaudeAIService {
         "You are a helpful AI assistant with access to various tools and capabilities.";
 
       // Call Claude API with streaming
-      const stream = await this.client.messages.create({
+      const stream: any = await (this.client as any).messages.create({
         model: this.config.model,
         max_tokens: this.config.maxTokens,
         temperature: this.config.temperature,

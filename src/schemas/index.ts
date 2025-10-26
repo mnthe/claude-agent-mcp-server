@@ -23,7 +23,13 @@ export const WriteFileSchema = z.object({
   content: z.string().describe("Content to write to the file"),
 });
 
+export const WebFetchSchema = z.object({
+  url: z.string().describe("HTTPS URL to fetch (HTTP not allowed for security)"),
+  extract: z.boolean().optional().describe("Extract main content from HTML (default: true)"),
+});
+
 export type QueryInput = z.infer<typeof QuerySchema>;
 export type ExecuteCommandInput = z.infer<typeof ExecuteCommandSchema>;
 export type ReadFileInput = z.infer<typeof ReadFileSchema>;
 export type WriteFileInput = z.infer<typeof WriteFileSchema>;
+export type WebFetchInput = z.infer<typeof WebFetchSchema>;

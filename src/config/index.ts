@@ -2,10 +2,13 @@
  * Configuration loader for Claude Agent MCP Server
  */
 
-import { ClaudeAgentConfig, MCPServerConfig } from '../types/index.js';
+import { ClaudeAgentConfig, MCPServerConfig, ProviderType } from '../types/index.js';
 
 export function loadConfig(): ClaudeAgentConfig {
-  // Get API key - required
+  // Determine provider (default: anthropic)
+  const provider = (process.env.CLAUDE_PROVIDER || 'anthropic') as ProviderType;
+
+  // Get API key - required for all providers
   const apiKey = process.env.ANTHROPIC_API_KEY || "";
 
   if (!apiKey) {
@@ -33,6 +36,21 @@ export function loadConfig(): ClaudeAgentConfig {
   // System prompt override - allows customization of AI assistant behavior
   const systemPrompt = process.env.CLAUDE_SYSTEM_PROMPT;
 
+  // Provider-specific configuration
+  const vertexProjectId = process.env.VERTEX_PROJECT_ID;
+  const vertexLocation = process.env.VERTEX_LOCATION || "us-central1";
+  const bedrockRegion = process.env.BEDROCK_REGION || "us-east-1";
+
+  // Tool enablement
+  const enableCommandExecution = process.env.CLAUDE_ENABLE_COMMAND_EXECUTION === "true";
+  const enableFileWrite = process.env.CLAUDE_ENABLE_FILE_WRITE === "true";
+
+  // Validate provider-specific requirements
+  if (provider === 'vertex' && !vertexProjectId) {
+    console.error("Error: VERTEX_PROJECT_ID is required when using Vertex AI provider");
+    process.exit(1);
+  }
+
   // Parse MCP server configurations
   let mcpServers: MCPServerConfig[] | undefined;
   const mcpServersEnv = process.env.CLAUDE_MCP_SERVERS;
@@ -46,6 +64,7 @@ export function loadConfig(): ClaudeAgentConfig {
   }
 
   return {
+    provider,
     apiKey,
     model,
     temperature,
@@ -58,5 +77,10 @@ export function loadConfig(): ClaudeAgentConfig {
     logToStderr,
     systemPrompt,
     mcpServers,
+    vertexProjectId,
+    vertexLocation,
+    bedrockRegion,
+    enableCommandExecution,
+    enableFileWrite,
   };
 }
