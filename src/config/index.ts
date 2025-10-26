@@ -20,9 +20,9 @@ export function loadConfig(): ClaudeAgentConfig {
   }
 
   // Model and parameters
-  const model = process.env.CLAUDE_MODEL || "claude-3-5-sonnet-20241022";
+  const model = process.env.CLAUDE_MODEL || "claude-sonnet-4-5-20250514";
   const temperature = parseFloat(process.env.CLAUDE_TEMPERATURE || "1.0");
-  const maxTokens = parseInt(process.env.CLAUDE_MAX_TOKENS || "8192", 10);
+  const maxTokens = parseInt(process.env.CLAUDE_MAX_TOKENS || "16384", 10);
 
   // Conversation mode configuration
   const enableConversations = process.env.CLAUDE_ENABLE_CONVERSATIONS === "true";
