@@ -4,4 +4,4 @@
 
 export * from './config.js';
 export * from './conversation.js';
-export * from './mcp.js';
+export * from './search.js';

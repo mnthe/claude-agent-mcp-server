@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Claude Agent MCP Server implements an **intelligent query handling system** with session management and conversation tracking. The architecture is inspired by [gemini-mcp-server](https://github.com/mnthe/gemini-mcp-server) and adapted for Claude (Anthropic).
+The Claude Agent MCP Server implements an **intelligent information retrieval system** with session management, conversation tracking, and multimodal input support. It provides three core tools: `query` for conversational AI, `search` for information retrieval, and `fetch` for content access.
 
 **Last Updated**: 2025-10-26
 
@@ -636,19 +636,6 @@ npm run test:list
 # Test query execution
 npm run test:query
 ```
-
-## Comparison with gemini-mcp-server
-
-| Aspect | gemini-mcp-server | claude-agent-mcp-server |
-|--------|-------------------|-------------------------|
-| Architecture | Agentic loop | Agentic loop via Agent SDK |
-| AI Service | Google Gemini | Anthropic Claude |
-| Tools | Multiple (query, search, fetch) | Multiple (query, read_file, write_file, web_fetch, execute_command) |
-| MCP Integration | External servers | Planned |
-| Multimodal | Yes | Planned |
-| Streaming | Supported | Implemented but not exposed |
-| Session Mgmt | In-memory | In-memory |
-| Logging | File-based | File-based |
 
 ## Conclusion
 

@@ -43,10 +43,6 @@ export function loadConfig(): ClaudeAgentConfig {
   const vertexLocation = process.env.VERTEX_LOCATION || "us-central1";
   const bedrockRegion = process.env.BEDROCK_REGION || "us-east-1";
 
-  // Tool enablement
-  const enableCommandExecution = process.env.CLAUDE_ENABLE_COMMAND_EXECUTION === "true";
-  const enableFileWrite = process.env.CLAUDE_ENABLE_FILE_WRITE === "true";
-
   // Validate provider-specific requirements
   if (provider === 'vertex' && !vertexProjectId) {
     console.error("Error: VERTEX_PROJECT_ID is required when using Vertex AI provider");
@@ -94,7 +90,5 @@ export function loadConfig(): ClaudeAgentConfig {
     vertexProjectId,
     vertexLocation,
     bedrockRegion,
-    enableCommandExecution,
-    enableFileWrite,
   };
 }

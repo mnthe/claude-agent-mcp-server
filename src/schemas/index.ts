@@ -29,27 +29,14 @@ export const QuerySchema = z.object({
   parts: z.array(MultimodalPartSchema).optional().describe("Optional multimodal content parts (images, text, PDF documents)"),
 });
 
-export const ExecuteCommandSchema = z.object({
-  command: z.string().describe("The shell command to execute"),
-  workingDirectory: z.string().optional().describe("Working directory for command execution"),
+export const SearchSchema = z.object({
+  query: z.string().describe("The search query"),
 });
 
-export const ReadFileSchema = z.object({
-  path: z.string().describe("Path to the file to read"),
-});
-
-export const WriteFileSchema = z.object({
-  path: z.string().describe("Path to the file to write"),
-  content: z.string().describe("Content to write to the file"),
-});
-
-export const WebFetchSchema = z.object({
-  url: z.string().describe("HTTPS URL to fetch (HTTP not allowed for security)"),
-  extract: z.boolean().optional().describe("Extract main content from HTML (default: true)"),
+export const FetchSchema = z.object({
+  id: z.string().describe("The unique identifier for the document to fetch"),
 });
 
 export type QueryInput = z.infer<typeof QuerySchema>;
-export type ExecuteCommandInput = z.infer<typeof ExecuteCommandSchema>;
-export type ReadFileInput = z.infer<typeof ReadFileSchema>;
-export type WriteFileInput = z.infer<typeof WriteFileSchema>;
-export type WebFetchInput = z.infer<typeof WebFetchSchema>;
+export type SearchInput = z.infer<typeof SearchSchema>;
+export type FetchInput = z.infer<typeof FetchSchema>;
