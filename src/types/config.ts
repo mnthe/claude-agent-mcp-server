@@ -18,10 +18,6 @@ export interface ClaudeAgentConfig {
   logToStderr: boolean;
   systemPrompt?: string;
   mcpServers?: MCPServerConfig[];
-  // Provider-specific settings
-  vertexProjectId?: string;
-  vertexLocation?: string;
-  bedrockRegion?: string;
 }
 
 export interface MCPServerConfig {

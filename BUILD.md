@@ -189,10 +189,10 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query","ar
 CLAUDE_PROVIDER=anthropic ANTHROPIC_API_KEY="..." node build/index.js
 
 # Vertex AI
-CLAUDE_PROVIDER=vertex VERTEX_PROJECT_ID="..." ANTHROPIC_API_KEY="..." node build/index.js
+CLAUDE_PROVIDER=vertex ANTHROPIC_VERTEX_PROJECT_ID="..." CLOUD_ML_REGION="global" node build/index.js
 
 # Bedrock
-CLAUDE_PROVIDER=bedrock BEDROCK_REGION="us-east-1" ANTHROPIC_API_KEY="..." node build/index.js
+CLAUDE_PROVIDER=bedrock AWS_REGION="us-east-1" node build/index.js
 ```
 
 ### Integration Testing

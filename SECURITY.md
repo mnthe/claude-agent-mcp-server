@@ -182,12 +182,12 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Vertex AI (uses GCP credentials)
 export CLAUDE_PROVIDER="vertex"
-export VERTEX_PROJECT_ID="your-project"
-export VERTEX_LOCATION="us-central1"
+export ANTHROPIC_VERTEX_PROJECT_ID="your-project"
+export CLOUD_ML_REGION="global"
 
 # Bedrock (uses AWS credentials)
 export CLAUDE_PROVIDER="bedrock"
-export BEDROCK_REGION="us-east-1"
+export AWS_REGION="us-east-1"
 ```
 
 **Best Practices:**

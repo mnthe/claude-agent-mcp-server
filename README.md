@@ -112,12 +112,12 @@ export CLAUDE_MAX_TOKENS="8192"
 ```bash
 # Use AWS Bedrock instead of Anthropic API
 export CLAUDE_PROVIDER="bedrock"
-export BEDROCK_REGION="us-east-1"
+export AWS_REGION="us-east-1"
 
 # OR use Google Cloud Vertex AI
 export CLAUDE_PROVIDER="vertex"
-export VERTEX_PROJECT_ID="your-gcp-project"
-export VERTEX_LOCATION="us-central1"
+export ANTHROPIC_VERTEX_PROJECT_ID="your-gcp-project"
+export CLOUD_ML_REGION="global"
 ```
 
 📘 **See [Provider Setup Guide](PROVIDERS.md) for complete instructions on using AWS Bedrock or Vertex AI.**
