@@ -9,12 +9,11 @@ export function loadConfig(): ClaudeAgentConfig {
   // Determine provider (default: anthropic)
   const provider = (process.env.CLAUDE_PROVIDER || 'anthropic') as ProviderType;
 
-  // Get API key - required for all providers
-  const apiKey = process.env.ANTHROPIC_API_KEY || "";
-
-  if (!apiKey) {
+  // Validate authentication based on provider
+  // Claude Agent SDK reads credentials from environment variables directly
+  if (provider === 'anthropic' && !process.env.ANTHROPIC_API_KEY) {
     console.error(
-      "Error: ANTHROPIC_API_KEY environment variable is required"
+      "Error: ANTHROPIC_API_KEY environment variable is required for anthropic provider"
     );
     process.exit(1);
   }
@@ -74,7 +73,6 @@ export function loadConfig(): ClaudeAgentConfig {
 
   return {
     provider,
-    apiKey,
     model,
     temperature,
     maxTokens,
