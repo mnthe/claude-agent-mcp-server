@@ -644,25 +644,6 @@ See [Provider Setup Guide](PROVIDERS.md) for provider-specific authentication tr
 - Check `CLAUDE_MAX_HISTORY` setting
 - Ensure using same `sessionId` across queries
 
-## Roadmap
-
-### Implemented Features
-
-- [x] **Query Tool**: Query Claude AI with multi-turn conversation support
-- [x] **Search Tool**: Search for information using Claude
-- [x] **Fetch Tool**: Retrieve full content of search results
-- [x] **Multimodal Support**: Images, text, and PDF documents via optional `parts` parameter
-- [x] **Session Management**: Multi-turn conversations with automatic session creation and cleanup
-- [x] **Multi-provider Support**: Anthropic, Vertex AI, AWS Bedrock
-- [x] **Security**: Input validation, session isolation, token limiting
-- [x] **Logging**: File-based and stderr logging with configurable output
-
-### Planned Features
-
-- [ ] **Streaming**: Real-time response streaming for better user experience
-- [ ] **Caching**: Response caching for identical queries to reduce costs
-- [ ] **Advanced Reasoning**: Enhanced multi-step reasoning capabilities
-
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
