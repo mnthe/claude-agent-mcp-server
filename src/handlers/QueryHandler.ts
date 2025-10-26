@@ -6,6 +6,7 @@ import { QueryInput } from '../schemas/index.js';
 import { ClaudeAIService } from '../services/ClaudeAIService.js';
 import { ConversationManager } from '../managers/ConversationManager.js';
 import { Logger } from '../utils/Logger.js';
+import { validatePrompt, validateMultimodalParts, sanitizeForLogging } from '../utils/securityLimits.js';
 
 export class QueryHandler {
   constructor(
@@ -15,11 +16,18 @@ export class QueryHandler {
   ) {}
 
   async handle(input: QueryInput): Promise<string> {
-    const { prompt, sessionId } = input;
+    const { prompt, sessionId, parts } = input;
 
-    this.logger.info('Handling query', { 
+    // Validate input
+    validatePrompt(prompt);
+    if (parts && parts.length > 0) {
+      validateMultimodalParts(parts);
+    }
+
+    this.logger.info('Handling query', {
       promptLength: prompt.length,
       sessionId: sessionId || 'none',
+      partsCount: parts?.length || 0,
     });
 
     try {
@@ -64,7 +72,7 @@ export class QueryHandler {
       this.logger.info('Query completed successfully');
       return result;
     } catch (error) {
-      this.logger.error('Error handling query', { error });
+      this.logger.error('Error handling query', sanitizeForLogging({ error }));
       throw error;
     }
   }

@@ -46,7 +46,7 @@ export ANTHROPIC_API_KEY="sk-ant-api03-..."
 export CLAUDE_PROVIDER="anthropic"
 
 # Optional: model configuration
-export CLAUDE_MODEL="claude-sonnet-4-5-20250514"
+export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
 export CLAUDE_TEMPERATURE="1.0"
 export CLAUDE_MAX_TOKENS="16384"
 ```
@@ -64,7 +64,7 @@ export CLAUDE_MAX_TOKENS="16384"
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514",
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
     }
@@ -162,7 +162,7 @@ export ANTHROPIC_API_KEY="sk-ant-api03-..."  # Still required by SDK
 export BEDROCK_REGION="us-east-1"
 
 # Optional: model configuration
-export CLAUDE_MODEL="claude-sonnet-4-5-20250514"
+export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
 ```
 
 **AWS Regions with Bedrock:**
@@ -186,7 +186,7 @@ export CLAUDE_MODEL="claude-sonnet-4-5-20250514"
         "CLAUDE_PROVIDER": "bedrock",
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "BEDROCK_REGION": "us-east-1",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514",
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
     }
@@ -210,7 +210,7 @@ In your project's `.claude.json`:
         "CLAUDE_PROVIDER": "bedrock",
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "BEDROCK_REGION": "us-east-1",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514"
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     }
   }
@@ -227,13 +227,11 @@ In your project's `.claude.json`:
 
 ### Model Naming in Bedrock
 
-Bedrock uses different model identifiers. The Claude Agent SDK handles the mapping, but you can use these names:
+Bedrock uses different model identifiers. The Claude Agent SDK handles the mapping automatically. Supported latest models:
 
-- `claude-sonnet-4-5-20250514` → `anthropic.claude-sonnet-4-5-v2`
-- `claude-3-5-sonnet-20241022` → `anthropic.claude-3-5-sonnet-v2`
-- `claude-3-opus-20240229` → `anthropic.claude-3-opus`
-- `claude-3-sonnet-20240229` → `anthropic.claude-3-sonnet`
-- `claude-3-haiku-20240307` → `anthropic.claude-3-haiku`
+- `claude-opus-4-20250514` → `anthropic.claude-opus-4-v1`
+- `claude-sonnet-4-5-20250929` → `anthropic.claude-sonnet-4-5-v2`
+- `claude-haiku-4-5-20250919` → `anthropic.claude-haiku-4-5-v2`
 
 ## Google Cloud Vertex AI
 
@@ -330,7 +328,7 @@ export VERTEX_PROJECT_ID="your-gcp-project-id"
 
 # Optional
 export VERTEX_LOCATION="us-central1"  # Default region
-export CLAUDE_MODEL="claude-sonnet-4-5-20250514"
+export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
 ```
 
 **Available Vertex AI Regions:**
@@ -354,7 +352,7 @@ export CLAUDE_MODEL="claude-sonnet-4-5-20250514"
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "VERTEX_PROJECT_ID": "your-gcp-project-id",
         "VERTEX_LOCATION": "us-central1",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514",
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
     }
@@ -379,7 +377,7 @@ In your project's `.claude.json`:
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "VERTEX_PROJECT_ID": "your-gcp-project-id",
         "VERTEX_LOCATION": "us-central1",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514"
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     }
   }
@@ -409,7 +407,7 @@ You can run multiple instances of claude-agent-mcp-server with different provide
       "env": {
         "CLAUDE_PROVIDER": "anthropic",
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514"
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     },
     "claude-bedrock": {
@@ -419,7 +417,7 @@ You can run multiple instances of claude-agent-mcp-server with different provide
         "CLAUDE_PROVIDER": "bedrock",
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "BEDROCK_REGION": "us-east-1",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514"
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     },
     "claude-vertex": {
@@ -430,7 +428,7 @@ You can run multiple instances of claude-agent-mcp-server with different provide
         "ANTHROPIC_API_KEY": "sk-ant-api03-...",
         "VERTEX_PROJECT_ID": "your-project",
         "VERTEX_LOCATION": "us-central1",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250514"
+        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
       }
     }
   }
