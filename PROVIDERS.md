@@ -227,9 +227,9 @@ In your project's `.claude.json`:
 
 Bedrock uses different model identifiers. The Claude Agent SDK handles the mapping automatically. Supported latest models:
 
-- `claude-opus-4-1-20250805` → `anthropic.claude-opus-4-v1`
-- `claude-sonnet-4-5-20250929` → `anthropic.claude-sonnet-4-5-v2`
-- `claude-haiku-4-5-20250919` → `anthropic.claude-haiku-4-5-v2`
+- `claude-opus-4-1-20250805` → `anthropic.claude-opus-4-1-20250805-v1:0`
+- `claude-sonnet-4-5-20250929` → `anthropic.claude-sonnet-4-5-20250929-v1:0`
+- `claude-haiku-4-5-20250919` → `anthropic.claude-haiku-4-5-20251001-v1:0`
 
 ## Google Cloud Vertex AI
 
