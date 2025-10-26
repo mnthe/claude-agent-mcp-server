@@ -94,6 +94,14 @@ export CLAUDE_MAX_TOKENS="8192"
 export CLAUDE_ENABLE_CONVERSATIONS="true"
 export CLAUDE_SESSION_TIMEOUT="3600"  # 1 hour
 export CLAUDE_MAX_HISTORY="10"        # Keep last 10 messages
+export CLAUDE_MAX_TURNS="10"          # Max agentic loop iterations for tool usage
+```
+
+**Optional Tool Enablement:**
+```bash
+# Enable additional tools (disabled by default for security)
+export CLAUDE_ENABLE_COMMAND_EXECUTION="true"  # Enable execute_command tool
+export CLAUDE_ENABLE_FILE_WRITE="true"         # Enable write_file tool
 ```
 
 **Optional System Prompt:**
@@ -194,7 +202,7 @@ You can run multiple Claude servers with different personas for specialized task
 
 ### query
 
-Main entrypoint for querying Claude AI with support for multi-turn conversations.
+Main entrypoint for querying Claude AI with support for multi-turn conversations and agentic tool usage.
 
 **Parameters:**
 - `prompt` (string, required): The text prompt to send to Claude
@@ -205,8 +213,9 @@ Main entrypoint for querying Claude AI with support for multi-turn conversations
 2. Retrieves conversation history if session ID provided
 3. Creates new session if conversations enabled but no session ID given
 4. Sends query to Claude with conversation context
-5. Saves conversation history for future turns
-6. Returns response with session ID and token usage statistics
+5. Claude Agent SDK automatically handles tool usage through agentic loops (up to `CLAUDE_MAX_TURNS`)
+6. Saves conversation history for future turns
+7. Returns response with session ID and token usage statistics
 
 **Examples:**
 ```
@@ -222,15 +231,103 @@ query: "Give me an example"
 sessionId: "abc123..."
 → Uses previous context to provide relevant example
 
-# Complex query
+# Complex query with agentic tool usage
 query: "Review this code for security issues: [code snippet]"
-→ Leverages Claude's code understanding capabilities
+→ Leverages Claude's code understanding and may automatically use tools
 ```
 
 **Response Includes:**
 - Answer content
 - Session ID (if conversations enabled)
 - Token usage: Input tokens and output tokens
+
+### read_file
+
+Read content from files in allowed directories.
+
+**Parameters:**
+- `path` (string, required): Path to the file to read
+
+**Security:**
+- Only allows reading from: current working directory, Documents, Downloads, Desktop
+- Prevents path traversal attacks
+- Maximum file size: 10MB
+- Rejects executable files
+
+**Example:**
+```
+read_file: "/path/to/file.txt"
+→ Returns file content
+```
+
+### write_file
+
+Write content to files in allowed directories (requires `CLAUDE_ENABLE_FILE_WRITE=true`).
+
+**Parameters:**
+- `path` (string, required): Path to the file to write
+- `content` (string, required): Content to write to the file
+
+**Security:**
+- Disabled by default - must set `CLAUDE_ENABLE_FILE_WRITE=true`
+- Only allows writing to: current working directory, Documents, Downloads, Desktop
+- Prevents path traversal attacks
+- Maximum file size: 10MB
+- Rejects executable files
+
+**Example:**
+```
+write_file: 
+  path: "/path/to/output.txt"
+  content: "Hello, World!"
+→ Writes content to file
+```
+
+### web_fetch
+
+Fetch and extract content from web URLs with comprehensive security protections.
+
+**Parameters:**
+- `url` (string, required): HTTPS URL to fetch (HTTP not allowed)
+- `extract` (boolean, optional): Extract main content from HTML (default: true)
+
+**Security:**
+- **HTTPS only**: HTTP URLs are rejected
+- **Private IP blocking**: Blocks 10.x, 172.16.x, 192.168.x, 127.x, 169.254.x
+- **Cloud metadata blocking**: Blocks AWS, GCP, Azure metadata endpoints
+- **Redirect validation**: Manual redirect handling with security checks (max 5 redirects)
+- **Content boundaries**: 50KB size limit, external content tagged
+- **Prompt injection protection**: External content wrapped with security tags
+
+**Example:**
+```
+web_fetch: 
+  url: "https://example.com/article"
+  extract: true
+→ Returns extracted main content wrapped in security tags
+```
+
+### execute_command
+
+Execute shell commands (requires `CLAUDE_ENABLE_COMMAND_EXECUTION=true`).
+
+**Parameters:**
+- `command` (string, required): The shell command to execute
+- `workingDirectory` (string, optional): Working directory for command execution
+
+**Security:**
+- Disabled by default - must set `CLAUDE_ENABLE_COMMAND_EXECUTION=true`
+- Command timeout: 30 seconds
+- Maximum output size: 100KB
+- Use with caution - can execute arbitrary commands
+
+**Example:**
+```
+execute_command:
+  command: "ls -la"
+  workingDirectory: "/tmp"
+→ Returns command output
+```
 
 ## Architecture
 
@@ -509,27 +606,36 @@ This project is inspired by and follows the architecture of [gemini-mcp-server](
 | Feature | gemini-mcp-server | claude-agent-mcp-server |
 |---------|-------------------|-------------------------|
 | AI Model | Google Gemini | Anthropic Claude |
-| SDK | @google/genai | @anthropic-ai/sdk |
+| SDK | @google/genai | @anthropic-ai/claude-agent-sdk |
 | Multi-turn Conversations | ✅ | ✅ |
 | System Prompt Customization | ✅ | ✅ |
 | Session Management | ✅ | ✅ |
 | File-based Logging | ✅ | ✅ |
+| Agentic Loop | ✅ | ✅ |
+| Tool Execution | ✅ (WebFetch, bash, files) | ✅ (WebFetch, bash, files) |
 | MCP-to-MCP Connectivity | ✅ | 🚧 Planned |
-| Agentic Loop | ✅ | 🚧 Planned |
-| Tool Execution | ✅ (WebFetch, MCP) | 🚧 Planned |
 | Multimodal Support | ✅ (images, audio, video) | 🚧 Planned |
 
 ## Roadmap
 
+### Implemented Features
+
+- [x] **Agentic Loop**: Turn-based execution with automatic tool selection via Claude Agent SDK
+- [x] **Tool Execution**: Built-in tools (bash commands, file operations, web fetch)
+  - [x] `execute_command`: Execute shell commands (requires `CLAUDE_ENABLE_COMMAND_EXECUTION=true`)
+  - [x] `read_file`: Read files from allowed directories
+  - [x] `write_file`: Write files to allowed directories (requires `CLAUDE_ENABLE_FILE_WRITE=true`)
+  - [x] `web_fetch`: Fetch and extract content from HTTPS URLs
+- [x] **Security**: Multi-layer defense with SSRF protection, prompt injection guardrails, file security
+- [x] **Multi-provider Support**: Anthropic, Vertex AI, AWS Bedrock
+
 ### Planned Features
 
-- [ ] **Agentic Loop**: Turn-based execution with automatic tool selection
-- [ ] **Tool Execution**: Built-in tools (bash, file operations, web fetch)
-- [ ] **MCP-to-MCP**: Integration with external MCP servers
-- [ ] **Streaming**: Real-time response streaming
-- [ ] **Multimodal**: Support for images and documents
-- [ ] **Caching**: Response caching for identical queries
-- [ ] **Advanced Reasoning**: Multi-step reasoning capabilities
+- [ ] **MCP-to-MCP**: Integration with external MCP servers for extended capabilities
+- [ ] **Streaming**: Real-time response streaming for better user experience
+- [ ] **Multimodal**: Support for images, audio, and documents
+- [ ] **Caching**: Response caching for identical queries to reduce costs
+- [ ] **Advanced Reasoning**: Enhanced multi-step reasoning capabilities
 
 ## Contributing
 

@@ -641,9 +641,9 @@ npm run test:query
 
 | Aspect | gemini-mcp-server | claude-agent-mcp-server |
 |--------|-------------------|-------------------------|
-| Architecture | Agentic loop | Query-response |
+| Architecture | Agentic loop | Agentic loop via Agent SDK |
 | AI Service | Google Gemini | Anthropic Claude |
-| Tools | Multiple (query, search, fetch) | Single (query) |
+| Tools | Multiple (query, search, fetch) | Multiple (query, read_file, write_file, web_fetch, execute_command) |
 | MCP Integration | External servers | Planned |
 | Multimodal | Yes | Planned |
 | Streaming | Supported | Implemented but not exposed |
