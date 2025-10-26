@@ -49,6 +49,7 @@ See [SECURITY.md](SECURITY.md) for detailed security documentation and best prac
 
 - Node.js 18 or higher
 - Anthropic API key ([Get one here](https://console.anthropic.com/))
+- **Optional**: AWS Bedrock or Google Cloud Vertex AI credentials (see [Provider Setup Guide](PROVIDERS.md))
 
 ## Quick Start
 
@@ -74,6 +75,8 @@ Set your Anthropic API key:
 export ANTHROPIC_API_KEY="your-api-key-here"
 ```
 
+**Using AWS Bedrock or Vertex AI?** See the [Provider Setup Guide](PROVIDERS.md) for detailed instructions on configuring alternative providers.
+
 ### Configuration
 
 **Required Environment Variables:**
@@ -87,6 +90,20 @@ export CLAUDE_MODEL="claude-3-5-sonnet-20241022"
 export CLAUDE_TEMPERATURE="1.0"
 export CLAUDE_MAX_TOKENS="8192"
 ```
+
+**Optional Provider Settings:**
+```bash
+# Use AWS Bedrock instead of Anthropic API
+export CLAUDE_PROVIDER="bedrock"
+export BEDROCK_REGION="us-east-1"
+
+# OR use Google Cloud Vertex AI
+export CLAUDE_PROVIDER="vertex"
+export VERTEX_PROJECT_ID="your-gcp-project"
+export VERTEX_LOCATION="us-central1"
+```
+
+📘 **See [Provider Setup Guide](PROVIDERS.md) for complete instructions on using AWS Bedrock or Vertex AI.**
 
 **Optional Conversation Settings:**
 ```bash
@@ -650,7 +667,8 @@ Quick start:
 
 ## Documentation
 
-- [SECURITY.md](SECURITY.md) - **Security documentation and best practices**
+- [PROVIDERS.md](PROVIDERS.md) - **Provider setup guide (AWS Bedrock, Vertex AI)**
+- [SECURITY.md](SECURITY.md) - Security documentation and best practices
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design
 - [DIRECTORY_STRUCTURE.md](DIRECTORY_STRUCTURE.md) - Code organization
 - [IMPLEMENTATION.md](IMPLEMENTATION.md) - Implementation details
