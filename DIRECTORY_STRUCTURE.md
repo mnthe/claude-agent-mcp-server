@@ -80,11 +80,9 @@ MCP tool request handlers.
 
 ```
 handlers/
-├── QueryHandler.ts           # Main query tool handler
-├── ExecuteCommandHandler.ts  # Command execution tool
-├── ReadFileHandler.ts        # File reading tool
-├── WriteFileHandler.ts       # File writing tool
-└── WebFetchHandler.ts        # Web content fetching tool
+├── QueryHandler.ts    # Query tool - Claude AI queries with conversation support
+├── SearchHandler.ts   # Search tool - Claude-powered search with caching
+└── FetchHandler.ts    # Fetch tool - Retrieve cached search results
 ```
 
 **Purpose:** Implement business logic for each MCP tool.
