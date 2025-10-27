@@ -229,7 +229,7 @@ Bedrock uses different model identifiers. The Claude Agent SDK handles the mappi
 
 - `claude-opus-4-1-20250805` → `anthropic.claude-opus-4-1-20250805-v1:0`
 - `claude-sonnet-4-5-20250929` → `anthropic.claude-sonnet-4-5-20250929-v1:0`
-- `claude-haiku-4-5-20250919` → `anthropic.claude-haiku-4-5-20251001-v1:0`
+- `claude-haiku-4-5-20251001` → `anthropic.claude-haiku-4-5-20251001-v1:0`
 
 ## Google Cloud Vertex AI
 
@@ -325,7 +325,7 @@ export ANTHROPIC_VERTEX_PROJECT_ID="your-gcp-project-id"  # Standard Claude Code
 export CLOUD_ML_REGION="global"  # Standard Claude Code env var
 
 # Optional
-export CLAUDE_MODEL="claude-sonnet-4-5-20250929"
+export CLAUDE_MODEL="claude-sonnet-4-5@20250929"
 export DISABLE_PROMPT_CACHING=1  # If needed
 ```
 
@@ -351,7 +351,7 @@ export DISABLE_PROMPT_CACHING=1  # If needed
         "CLAUDE_PROVIDER": "vertex",
         "ANTHROPIC_VERTEX_PROJECT_ID": "your-gcp-project-id",
         "CLOUD_ML_REGION": "global",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929",
+        "CLAUDE_MODEL": "claude-sonnet-4-5@20250929",
         "CLAUDE_ENABLE_CONVERSATIONS": "true"
       }
     }
@@ -375,7 +375,7 @@ In your project's `.claude.json`:
         "CLAUDE_PROVIDER": "vertex",
         "ANTHROPIC_VERTEX_PROJECT_ID": "your-gcp-project-id",
         "CLOUD_ML_REGION": "global",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
+        "CLAUDE_MODEL": "claude-sonnet-4-5@20250929"
       }
     }
   }
@@ -424,7 +424,7 @@ You can run multiple instances of claude-agent-mcp-server with different provide
         "CLAUDE_PROVIDER": "vertex",
         "ANTHROPIC_VERTEX_PROJECT_ID": "your-project",
         "CLOUD_ML_REGION": "global",
-        "CLAUDE_MODEL": "claude-sonnet-4-5-20250929"
+        "CLAUDE_MODEL": "claude-sonnet-4-5@20250929"
       }
     }
   }
