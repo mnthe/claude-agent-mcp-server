@@ -23,7 +23,7 @@ export function loadConfig(): ClaudeAgentConfig {
   // Logging configuration
   const logDir = process.env.CLAUDE_LOG_DIR;
   const disableLogging = process.env.CLAUDE_DISABLE_LOGGING === "true";
-  const logToStderr = process.env.CLAUDE_LOG_TO_STDERR === "true";
+  const logToStderr = process.env.CLAUDE_LOG_TO_STDERR !== "false";  // Default: true (console logging)
 
   // System prompt override - allows customization of AI assistant behavior
   const systemPrompt = process.env.CLAUDE_SYSTEM_PROMPT;

@@ -11,7 +11,7 @@ This server provides:
 - **MCP-to-MCP Connectivity**: Integrate with external MCP servers for extended tool capabilities
 - **Multimodal Support**: Send images, text, and PDF documents alongside text prompts
 - **Session Management**: Automatic session creation and cleanup with configurable timeouts
-- **Logging & Observability**: File-based logging of execution traces and responses
+- **Logging & Observability**: Console logging (default) or optional file-based logging
 
 ## Key Features
 
@@ -57,8 +57,8 @@ Built on Claude's advanced capabilities:
 See [SECURITY.md](SECURITY.md) for detailed security documentation and best practices.
 
 ### 📝 Observability
-- File-based logging (`logs/general.log`, `logs/reasoning.log`)
-- Configurable log directory or disable logging for npx/containerized environments
+- Console logging to stderr (default, recommended for npx/MCP usage)
+- Optional file-based logging (`logs/general.log`, `logs/reasoning.log`)
 - Detailed execution traces for debugging
 - Token usage statistics per query
 
@@ -138,9 +138,15 @@ export CLAUDE_SYSTEM_PROMPT="You are a code review specialist. Focus on code qua
 
 **Optional Logging Configuration:**
 ```bash
-export CLAUDE_DISABLE_LOGGING="false"      # Set to 'true' to disable file-based logging
+# Default: Console logging to stderr (recommended for npx/MCP usage)
+export CLAUDE_LOG_TO_STDERR="true"         # Default: true (console logging)
+
+# For file-based logging instead:
+export CLAUDE_LOG_TO_STDERR="false"        # Disable console, use file logging
 export CLAUDE_LOG_DIR="/path/to/logs"      # Custom log directory (default: ./logs)
-export CLAUDE_LOG_TO_STDERR="true"         # Set to 'true' to pipe logs to stderr for debugging
+
+# To disable logging completely:
+export CLAUDE_DISABLE_LOGGING="true"
 ```
 
 **Optional MCP Server Configuration:**
@@ -403,7 +409,7 @@ src/
 │   └── index.ts            # Error class definitions
 │
 ├── utils/             # Utilities
-│   └── Logger.ts           # File-based logging
+│   └── Logger.ts           # Console and file-based logging
 │
 └── index.ts           # Entry point
 ```
@@ -523,25 +529,25 @@ See [examples/custom-prompts.md](examples/custom-prompts.md) for more ready-to-u
 
 Control how the server logs information:
 
-**Disable Logging (for npx or containers):**
+**Default: Console Logging**
+
+Logs are sent to stderr by default, making them visible in MCP client logs.
+
+**For File-Based Logging:**
 ```bash
-export CLAUDE_DISABLE_LOGGING="true"
+export CLAUDE_LOG_TO_STDERR="false"        # Disable console, use files
+export CLAUDE_LOG_DIR="/var/log/claude-agent"  # Log directory (default: ./logs)
 ```
 
-**Custom Log Directory:**
-```bash
-export CLAUDE_LOG_DIR="/var/log/claude-agent"
-```
-
-**Debug Mode (log to stderr):**
-```bash
-export CLAUDE_LOG_TO_STDERR="true"
-```
-
-**Check Logs:**
+Then check logs:
 ```bash
 tail -f logs/general.log     # All logs
 tail -f logs/reasoning.log   # Reasoning traces (if implemented)
+```
+
+**To Disable All Logging:**
+```bash
+export CLAUDE_DISABLE_LOGGING="true"
 ```
 
 ### Token Usage Monitoring
@@ -590,7 +596,21 @@ npm run build
 
 If the MCP server appears to be "dead" or disconnects unexpectedly:
 
-**Enable stderr logging to see what's happening:**
+**Check MCP client logs** (logs are sent to stderr by default):
+- **macOS**: `~/Library/Logs/Claude/mcp*.log`
+- **Windows**: `%APPDATA%\Claude\Logs\mcp*.log`
+
+Server logs will appear in these files automatically.
+
+### Log Directory Errors
+
+If you encounter errors like `ENOENT: no such file or directory, mkdir './logs'`:
+
+**This should not happen with default settings** (console logging is default).
+
+If you enabled file logging (`CLAUDE_LOG_TO_STDERR="false"`):
+
+**Solution:** Use a writable log directory:
 ```json
 {
   "mcpServers": {
@@ -599,27 +619,12 @@ If the MCP server appears to be "dead" or disconnects unexpectedly:
       "args": ["-y", "github:mnthe/claude-agent-mcp-server"],
       "env": {
         "ANTHROPIC_API_KEY": "your-api-key",
-        "CLAUDE_LOG_TO_STDERR": "true"
+        "CLAUDE_LOG_TO_STDERR": "false",
+        "CLAUDE_LOG_DIR": "/tmp/claude-logs"
       }
     }
   }
 }
-```
-
-This will pipe all server logs to stderr, making them visible in your MCP client's logs.
-
-### Log Directory Errors
-
-If you encounter errors like `ENOENT: no such file or directory, mkdir './logs'`:
-
-**Quick Fix:** Disable logging when running via npx:
-```bash
-export CLAUDE_DISABLE_LOGGING="true"
-```
-
-**Alternative:** Set a custom log directory with write permissions:
-```bash
-export CLAUDE_LOG_DIR="/tmp/claude-logs"
 ```
 
 ### Authentication Errors
