@@ -21,33 +21,36 @@ export const SecurityLimits = {
 };
 
 /**
+ * Generic validation function for text input
+ */
+function validateTextInput(
+  input: string,
+  fieldName: string,
+  maxLength: number
+): void {
+  if (!input || input.trim().length === 0) {
+    throw new Error(`${fieldName} cannot be empty`);
+  }
+
+  if (input.length > maxLength) {
+    throw new Error(
+      `${fieldName} too long: ${input.length} characters (max: ${maxLength})`
+    );
+  }
+}
+
+/**
  * Validate prompt input
  */
 export function validatePrompt(prompt: string): void {
-  if (!prompt || prompt.trim().length === 0) {
-    throw new Error('Prompt cannot be empty');
-  }
-
-  if (prompt.length > SecurityLimits.MAX_PROMPT_LENGTH) {
-    throw new Error(
-      `Prompt too long: ${prompt.length} characters (max: ${SecurityLimits.MAX_PROMPT_LENGTH})`
-    );
-  }
+  validateTextInput(prompt, 'Prompt', SecurityLimits.MAX_PROMPT_LENGTH);
 }
 
 /**
  * Validate search query
  */
 export function validateQuery(query: string): void {
-  if (!query || query.trim().length === 0) {
-    throw new Error('Query cannot be empty');
-  }
-
-  if (query.length > SecurityLimits.MAX_QUERY_LENGTH) {
-    throw new Error(
-      `Query too long: ${query.length} characters (max: ${SecurityLimits.MAX_QUERY_LENGTH})`
-    );
-  }
+  validateTextInput(query, 'Query', SecurityLimits.MAX_QUERY_LENGTH);
 }
 
 /**
