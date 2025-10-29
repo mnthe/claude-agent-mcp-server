@@ -7,7 +7,7 @@ import { SearchInput } from '../schemas/index.js';
 import { SearchResult, CachedDocument } from '../types/index.js';
 import { ClaudeAIService } from '../services/ClaudeAIService.js';
 import { Logger } from '../utils/Logger.js';
-import { validateQuery, SecurityLimits, sanitizeForLogging } from '../utils/securityLimits.js';
+import { validateQuery, SecurityLimits, sanitizeForLogging, getErrorMessage } from '../utils/securityLimits.js';
 
 export class SearchHandler {
   private claudeAI: ClaudeAIService;
@@ -68,10 +68,9 @@ Return your response as a structured list of relevant topics or documents with b
       return JSON.stringify({ results });
     } catch (error) {
       this.logger.error('Error in search handler', sanitizeForLogging({ error }));
-      const errorMessage = error instanceof Error ? error.message : String(error);
       return JSON.stringify({
         results: [],
-        error: `Error searching with Claude: ${errorMessage}`
+        error: `Error searching with Claude: ${getErrorMessage(error)}`
       });
     }
   }

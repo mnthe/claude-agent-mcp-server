@@ -18,6 +18,7 @@ import { Logger } from '../utils/Logger.js';
 import { QueryHandler } from '../handlers/QueryHandler.js';
 import { SearchHandler } from '../handlers/SearchHandler.js';
 import { FetchHandler } from '../handlers/FetchHandler.js';
+import { getErrorMessage } from '../utils/securityLimits.js';
 
 export class ClaudeAgentMCPServer {
   private server: Server;
@@ -242,16 +243,17 @@ export class ClaudeAgentMCPServer {
           ]
         };
       } catch (error) {
+        const errorMessage = getErrorMessage(error);
         this.logger.error('Error executing tool', {
           toolName,
-          error: error instanceof Error ? error.message : String(error)
+          error: errorMessage
         });
 
         return {
           content: [
             {
               type: "text" as const,
-              text: `Error: ${error instanceof Error ? error.message : String(error)}`
+              text: `Error: ${errorMessage}`
             }
           ],
           isError: true

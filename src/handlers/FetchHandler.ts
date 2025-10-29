@@ -6,6 +6,7 @@
 import { FetchInput } from '../schemas/index.js';
 import { FetchResult, CachedDocument } from '../types/index.js';
 import { Logger } from '../utils/Logger.js';
+import { getErrorMessage } from '../utils/securityLimits.js';
 
 export class FetchHandler {
   private searchCache: Map<string, CachedDocument>;
@@ -48,9 +49,8 @@ export class FetchHandler {
       return JSON.stringify(fetchResult);
     } catch (error) {
       this.logger.error('Error in fetch handler', { error });
-      const errorMessage = error instanceof Error ? error.message : String(error);
       return JSON.stringify({
-        error: `Error fetching document: ${errorMessage}`
+        error: `Error fetching document: ${getErrorMessage(error)}`
       });
     }
   }
