@@ -43,7 +43,6 @@ Built on Claude's advanced capabilities:
 - **Multi-turn conversations** with automatic session management
 - **Context preservation** across conversation turns
 - **Configurable model parameters** (temperature, max tokens)
-- **Token usage tracking** for monitoring and optimization
 
 ### 🔐 Security for Local Deployment
 
@@ -60,7 +59,6 @@ See [SECURITY.md](SECURITY.md) for detailed security documentation and best prac
 - Console logging to stderr (default, recommended for npx/MCP usage)
 - Optional file-based logging (`logs/general.log`, `logs/reasoning.log`)
 - Detailed execution traces for debugging
-- Token usage statistics per query
 
 ## Prerequisites
 
@@ -290,7 +288,7 @@ Query Claude AI with intelligent response generation. Supports multi-turn conver
 3. Creates new session if conversations enabled but no session ID given
 4. Processes multimodal content if provided (images, PDF documents)
 5. Sends query to Claude with conversation context and multimodal content
-6. Returns response with session ID and token usage statistics
+6. Returns response with session ID
 
 **Examples:**
 ```
@@ -332,7 +330,6 @@ parts: [
 **Response Includes:**
 - Answer content
 - Session ID (if conversations enabled)
-- Token usage: Input tokens and output tokens
 
 ### search
 
@@ -549,23 +546,6 @@ tail -f logs/reasoning.log   # Reasoning traces (if implemented)
 ```bash
 export CLAUDE_DISABLE_LOGGING="true"
 ```
-
-### Token Usage Monitoring
-
-Every response includes token usage:
-```
-Answer content here...
-
----
-Session ID: abc123...
-Tokens - Input: 150, Output: 200
-```
-
-Use this information to:
-- Monitor API costs
-- Optimize prompt length
-- Track conversation complexity
-- Plan conversation history limits
 
 ## Development
 
