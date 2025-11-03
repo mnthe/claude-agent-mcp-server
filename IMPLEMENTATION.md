@@ -152,7 +152,6 @@ class ConversationManager {
 - **System Prompt**: Inject custom or default system prompt
 - **API Calls**: Handle authentication and error handling
 - **Streaming**: Support for streaming responses (queryStream)
-- **Token Tracking**: Return usage statistics
 
 **Example**:
 ```typescript
@@ -169,8 +168,8 @@ async query(prompt: string, history: Message[]): Promise<ClaudeResponse> {
     system: this.config.systemPrompt || "Default prompt",
     messages,
   });
-  
-  return { content, usage };
+
+  return { content };
 }
 ```
 
@@ -201,9 +200,9 @@ async handle(input: QueryInput): Promise<string> {
   // Save conversation
   this.conversationManager.addMessage(sessionId, { role: 'user', content: input.prompt });
   this.conversationManager.addMessage(sessionId, { role: 'assistant', content: response.content });
-  
+
   // Format and return
-  return this.formatResponse(response.content, sessionId, response.usage);
+  return this.formatResponse(response.content, sessionId);
 }
 ```
 
@@ -306,8 +305,7 @@ class Logger {
    ↓
 5. Return formatted response to MCP client
    ├─ Content
-   ├─ Session ID
-   └─ Token usage
+   └─ Session ID
 ```
 
 ### Session Management Flow

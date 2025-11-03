@@ -31,7 +31,7 @@ User Input
 │  │     └─ System Prompt + Messages      │               │
 │  │                                      │               │
 │  │  3. Response Processing              │               │
-│  │     └─ Extract content + usage       │               │
+│  │     └─ Extract content               │               │
 │  │                                      │               │
 │  │  4. History Update                   │               │
 │  │     ├─ Add user message              │               │
@@ -40,8 +40,7 @@ User Input
 │  │                                      │               │
 │  │  5. Format Response                  │               │
 │  │     ├─ Content                       │               │
-│  │     ├─ Session ID                    │               │
-│  │     └─ Token usage                   │               │
+│  │     └─ Session ID                    │               │
 │  │                                      │               │
 │  └──────────────────────────────────────┘               │
 │                                                          │
@@ -49,8 +48,7 @@ User Input
   ↓
 Structured Result
 ├─ Answer content
-├─ Session ID (if conversations enabled)
-└─ Token usage (input + output tokens)
+└─ Session ID (if conversations enabled)
 ```
 
 ## Component Architecture
@@ -230,8 +228,7 @@ Structured Result
                                               └→ [Format Response]
                                                     │
                                                     ├─ Content
-                                                    ├─ Session ID
-                                                    └─ Token usage
+                                                    └─ Session ID
                                                     │
                                                     ▼
 [User] ← [MCP Client] ← [MCP Server] ← [Formatted Result]
@@ -404,7 +401,6 @@ setInterval(() => {
 - Wrap Anthropic SDK
 - Format messages for API
 - Handle streaming responses
-- Track token usage
 
 **API Call Flow**:
 ```typescript
@@ -432,11 +428,10 @@ async query(prompt, history) {
     .filter(block => block.type === 'text')
     .map(block => block.text)
     .join('\n');
-  
-  // 4. Return with usage
+
+  // 4. Return content
   return {
-    content,
-    usage: response.usage
+    content
   };
 }
 ```

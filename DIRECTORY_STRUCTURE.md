@@ -214,7 +214,6 @@ services/
 **ClaudeAIService Features:**
 - Multi-provider support (Anthropic, Vertex AI, Bedrock)
 - Streaming response handling
-- Token usage tracking
 - Message formatting and history management
 - Multi-turn execution via Claude Agent SDK
 
@@ -231,7 +230,6 @@ const response = await service.query(
 );
 
 console.log(response.content);
-console.log(response.usage);  // Token counts
 ```
 
 ### `/src/types/`

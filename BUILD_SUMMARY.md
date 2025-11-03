@@ -61,7 +61,6 @@ claude-agent-mcp-server/
 - [x] Automatic session creation and management
 - [x] Session cleanup (auto-expire after timeout)
 - [x] Conversation history limiting
-- [x] Token usage tracking
 
 #### Configuration ✅
 - [x] Environment-based configuration
