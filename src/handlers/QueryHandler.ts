@@ -65,8 +65,7 @@ export class QueryHandler {
       // Format response
       const result = this.formatResponse(
         response.content,
-        effectiveSessionId,
-        response.usage
+        effectiveSessionId
       );
 
       this.logger.info('Query completed successfully');
@@ -79,19 +78,12 @@ export class QueryHandler {
 
   private formatResponse(
     content: string,
-    sessionId: string | undefined,
-    usage?: { input_tokens: number; output_tokens: number }
+    sessionId: string | undefined
   ): string {
     const parts: string[] = [content];
 
     if (sessionId) {
       parts.push(`\n\n---\nSession ID: ${sessionId}`);
-    }
-
-    if (usage) {
-      parts.push(
-        `\nTokens - Input: ${usage.input_tokens}, Output: ${usage.output_tokens}`
-      );
     }
 
     return parts.join('');
