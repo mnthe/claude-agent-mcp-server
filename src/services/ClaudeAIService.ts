@@ -10,10 +10,6 @@ import { Logger } from '../utils/Logger.js';
 
 export interface ClaudeResponse {
   content: string;
-  usage?: {
-    input_tokens: number;
-    output_tokens: number;
-  };
 }
 
 export class ClaudeAIService {
@@ -105,7 +101,6 @@ export class ClaudeAIService {
 
       // Collect all messages from the stream
       let content = '';
-      let usage: any = undefined;
 
       for await (const message of queryStream) {
         // SDKMessage can be UserMessage, AssistantMessage, ThinkingMessage, etc.
@@ -121,26 +116,16 @@ export class ClaudeAIService {
               }
             }
           }
-          
-          // Capture usage information if available
-          if (apiMessage.usage) {
-            usage = {
-              input_tokens: apiMessage.usage.input_tokens || 0,
-              output_tokens: apiMessage.usage.output_tokens || 0,
-            };
-          }
         }
       }
 
       this.logger.info('Received response from Claude Agent SDK', {
         provider: this.config.provider,
         contentLength: content.length,
-        hasUsage: !!usage,
       });
 
       return {
         content,
-        usage,
       };
     } catch (error) {
       this.logger.error('Error querying Claude Agent SDK', { error });
