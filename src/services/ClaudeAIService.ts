@@ -27,6 +27,69 @@ export class ClaudeAIService {
   }
 
   /**
+   * Build conversation context from history
+   */
+  private buildFullPrompt(prompt: string, conversationHistory: Message[]): string {
+    if (conversationHistory.length === 0) {
+      return prompt;
+    }
+
+    const contextParts: string[] = ["Previous conversation:"];
+    for (const msg of conversationHistory) {
+      contextParts.push(`${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`);
+    }
+    contextParts.push(`\nCurrent query: ${prompt}`);
+    return contextParts.join('\n');
+  }
+
+  /**
+   * Configure MCP servers for Claude Agent SDK
+   */
+  private configureMcpServers(): Record<string, any> | undefined {
+    const mcpServers: Record<string, any> = {};
+    
+    if (this.config.mcpServers && this.config.mcpServers.length > 0) {
+      for (const server of this.config.mcpServers) {
+        if (server.transport === 'stdio') {
+          mcpServers[server.name] = {
+            command: server.command,
+            args: server.args || [],
+            env: server.env || {},
+          };
+        } else if (server.transport === 'http') {
+          mcpServers[server.name] = {
+            type: 'http',
+            url: server.url,
+            headers: server.headers || {},
+          };
+        }
+      }
+    }
+
+    return Object.keys(mcpServers).length > 0 ? mcpServers : undefined;
+  }
+
+  /**
+   * Get system prompt
+   */
+  private getSystemPrompt(): string {
+    return this.config.systemPrompt || 
+      "You are a helpful AI assistant with access to various tools and capabilities.";
+  }
+
+  /**
+   * Create options for Claude Agent SDK query
+   */
+  private createQueryOptions(maxTurns: number): Options {
+    return {
+      model: this.config.model,
+      systemPrompt: this.getSystemPrompt(),
+      maxTurns: maxTurns,
+      mcpServers: this.configureMcpServers(),
+    };
+  }
+
+  /**
    * Send a query to Claude with conversation history
    * The Claude Agent SDK handles provider routing internally via environment variables
    * Supports multi-turn agentic loops for tool usage
@@ -46,51 +109,11 @@ export class ClaudeAIService {
         maxTurns: turns,
       });
 
-      // Prepare system prompt
-      const systemPrompt = this.config.systemPrompt || 
-        "You are a helpful AI assistant with access to various tools and capabilities.";
-
       // Build conversation context from history
-      // Claude Agent SDK uses streaming, so we'll build a context prompt if there's history
-      let fullPrompt = prompt;
-      if (conversationHistory.length > 0) {
-        const contextParts: string[] = ["Previous conversation:"];
-        for (const msg of conversationHistory) {
-          contextParts.push(`${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`);
-        }
-        contextParts.push(`\nCurrent query: ${prompt}`);
-        fullPrompt = contextParts.join('\n');
-      }
-
-      // Configure MCP servers for Claude Agent SDK
-      const mcpServers: Record<string, any> = {};
-      if (this.config.mcpServers && this.config.mcpServers.length > 0) {
-        for (const server of this.config.mcpServers) {
-          if (server.transport === 'stdio') {
-            mcpServers[server.name] = {
-              command: server.command,
-              args: server.args || [],
-              env: server.env || {},
-            };
-          } else if (server.transport === 'http') {
-            mcpServers[server.name] = {
-              type: 'http',
-              url: server.url,
-              headers: server.headers || {},
-            };
-          }
-        }
-      }
+      const fullPrompt = this.buildFullPrompt(prompt, conversationHistory);
 
       // Configure options for Claude Agent SDK
-      const options: Options = {
-        model: this.config.model,
-        systemPrompt: systemPrompt,
-        maxTurns: turns, // Allow multiple turns for agentic tool usage
-        mcpServers: Object.keys(mcpServers).length > 0 ? mcpServers : undefined,
-        // Temperature and maxTokens are not directly supported in Options
-        // The SDK uses its own defaults based on the model
-      };
+      const options = this.createQueryOptions(turns);
 
       // Call Claude Agent SDK query function
       // This returns an AsyncGenerator<SDKMessage>
@@ -153,48 +176,11 @@ export class ClaudeAIService {
         maxTurns: turns,
       });
 
-      // Prepare system prompt
-      const systemPrompt = this.config.systemPrompt || 
-        "You are a helpful AI assistant with access to various tools and capabilities.";
-
       // Build conversation context from history
-      let fullPrompt = prompt;
-      if (conversationHistory.length > 0) {
-        const contextParts: string[] = ["Previous conversation:"];
-        for (const msg of conversationHistory) {
-          contextParts.push(`${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`);
-        }
-        contextParts.push(`\nCurrent query: ${prompt}`);
-        fullPrompt = contextParts.join('\n');
-      }
-
-      // Configure MCP servers for Claude Agent SDK
-      const mcpServers: Record<string, any> = {};
-      if (this.config.mcpServers && this.config.mcpServers.length > 0) {
-        for (const server of this.config.mcpServers) {
-          if (server.transport === 'stdio') {
-            mcpServers[server.name] = {
-              command: server.command,
-              args: server.args || [],
-              env: server.env || {},
-            };
-          } else if (server.transport === 'http') {
-            mcpServers[server.name] = {
-              type: 'http',
-              url: server.url,
-              headers: server.headers || {},
-            };
-          }
-        }
-      }
+      const fullPrompt = this.buildFullPrompt(prompt, conversationHistory);
 
       // Configure options for Claude Agent SDK
-      const options: Options = {
-        model: this.config.model,
-        systemPrompt: systemPrompt,
-        maxTurns: turns, // Allow multiple turns for agentic tool usage
-        mcpServers: Object.keys(mcpServers).length > 0 ? mcpServers : undefined,
-      };
+      const options = this.createQueryOptions(turns);
 
       // Call Claude Agent SDK query function
       const queryStream = query({
